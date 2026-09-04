@@ -1,0 +1,674 @@
+<div class="registration-container">
+  <!-- Header -->
+  <div class="registration-header">
+    <div class="header-content">
+      <button class="back-button" *ngIf="currentStep > 1" (click)="previousStep()">
+        <span class="back-icon">←</span>
+      </button>
+      <div class="header-text">
+        <h1>Create Account</h1>
+        <p>Step {{ currentStep }} of {{ totalSteps }}</p>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar" [style.width.%]="getProgressPercentage()"></div>
+    </div>
+
+    <!-- Step Indicators -->
+    <div class="step-indicators">
+      <div class="step-indicator" 
+           *ngFor="let step of [1,2,3,4,5]" 
+           [class.active]="step === currentStep"
+           [class.completed]="step < currentStep"
+           (click)="goToStep(step)">
+        <div class="step-circle">
+          <span *ngIf="step < currentStep">✓</span>
+          <span *ngIf="step >= currentStep">{{ step }}</span>
+        </div>
+        <span class="step-label">
+          <ng-container [ngSwitch]="step">
+            <ng-container *ngSwitchCase="1">Basic</ng-container>
+            <ng-container *ngSwitchCase="2">Details</ng-container>
+            <ng-container *ngSwitchCase="3">Documents</ng-container>
+            <ng-container *ngSwitchCase="4">Verify</ng-container>
+            <ng-container *ngSwitchCase="5">Review</ng-container>
+          </ng-container>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="registration-content">
+    
+    <!-- Alert Messages -->
+    <div class="alert alert-success" *ngIf="successMessage">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <span class="alert-icon">✕</span>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Step 1: Basic Information -->
+    <div class="step-content" *ngIf="currentStep === 1">
+      <div class="step-header">
+        <div class="step-icon">👤</div>
+        <h2>Basic Information</h2>
+        <p>Let's start with your basic details</p>
+      </div>
+
+      <form [formGroup]="step1Form" class="registration-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="firstName" 
+              formControlName="firstName"
+              placeholder="Enter your first name"
+              [class.error]="step1['firstName'].invalid && step1['firstName'].touched">
+            <div class="error-message" *ngIf="step1['firstName'].invalid && step1['firstName'].touched">
+              <span *ngIf="step1['firstName'].errors?.['required']">First name is required</span>
+              <span *ngIf="step1['firstName'].errors?.['minlength']">Minimum 2 characters required</span>
+              <span *ngIf="step1['firstName'].errors?.['pattern']">Only letters allowed</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Last Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="lastName" 
+              formControlName="lastName"
+              placeholder="Enter your last name"
+              [class.error]="step1['lastName'].invalid && step1['lastName'].touched">
+            <div class="error-message" *ngIf="step1['lastName'].invalid && step1['lastName'].touched">
+              <span *ngIf="step1['lastName'].errors?.['required']">Last name is required</span>
+              <span *ngIf="step1['lastName'].errors?.['minlength']">Minimum 2 characters required</span>
+              <span *ngIf="step1['lastName'].errors?.['pattern']">Only letters allowed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email"
+            placeholder="your.email@example.com"
+            [class.error]="step1['email'].invalid && step1['email'].touched">
+          <div class="validation-spinner" *ngIf="step1['email'].pending">
+            <span class="spinner"></span> Checking availability...
+          </div>
+          <div class="error-message" *ngIf="step1['email'].invalid && step1['email'].touched">
+            <span *ngIf="step1['email'].errors?.['required']">Email is required</span>
+            <span *ngIf="step1['email'].errors?.['email']">Please enter a valid email</span>
+            <span *ngIf="step1['email'].errors?.['emailTaken']">This email is already registered</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number <span class="required">*</span></label>
+          <input 
+            type="tel" 
+            id="phone" 
+            formControlName="phone"
+            placeholder="10-digit mobile number"
+            maxlength="10"
+            [class.error]="step1['phone'].invalid && step1['phone'].touched">
+          <div class="validation-spinner" *ngIf="step1['phone'].pending">
+            <span class="spinner"></span> Checking availability...
+          </div>
+          <div class="error-message" *ngIf="step1['phone'].invalid && step1['phone'].touched">
+            <span *ngIf="step1['phone'].errors?.['required']">Phone number is required</span>
+            <span *ngIf="step1['phone'].errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
+            <span *ngIf="step1['phone'].errors?.['phoneTaken']">This phone number is already registered</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="userType">User Type <span class="required">*</span></label>
+            <select 
+              id="userType" 
+              formControlName="userType"
+              [class.error]="step1['userType'].invalid && step1['userType'].touched">
+              <option *ngFor="let type of userTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div class="error-message" *ngIf="step1['userType'].invalid && step1['userType'].touched">
+              User type is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="userStatus">Status <span class="required">*</span></label>
+            <select 
+              id="userStatus" 
+              formControlName="userStatus"
+              [class.error]="step1['userStatus'].invalid && step1['userStatus'].touched">
+              <option *ngFor="let status of userStatuses" [value]="status.value">{{ status.label }}</option>
+            </select>
+            <div class="error-message" *ngIf="step1['userStatus'].invalid && step1['userStatus'].touched">
+              Status is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <div class="password-input">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password"
+              placeholder="Enter a strong password"
+              [class.error]="step1['password'].invalid && step1['password'].touched">
+            <button type="button" class="toggle-password" (click)="togglePasswordVisibility('password')">
+              <span *ngIf="!showPassword">👁️</span>
+              <span *ngIf="showPassword">🙈</span>
+            </button>
+          </div>
+          <div class="password-requirements">
+            <p>Password must contain:</p>
+            <ul>
+              <li [class.met]="hasUpperCase()">• At least one uppercase letter</li>
+              <li [class.met]="hasLowerCase()">• At least one lowercase letter</li>
+              <li [class.met]="hasNumber()">• At least one number</li>
+              <li [class.met]="hasSpecialChar()">• At least one special character</li>
+              <li [class.met]="hasMinLength()">• Minimum 8 characters</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
+          <div class="password-input">
+            <input 
+              [type]="showConfirmPassword ? 'text' : 'password'" 
+              id="confirmPassword" 
+              formControlName="confirmPassword"
+              placeholder="Re-enter your password"
+              [class.error]="(step1['confirmPassword'].invalid && step1['confirmPassword'].touched) || step1Form.errors?.['passwordMismatch']">
+            <button type="button" class="toggle-password" (click)="togglePasswordVisibility('confirmPassword')">
+              <span *ngIf="!showConfirmPassword">👁️</span>
+              <span *ngIf="showConfirmPassword">🙈</span>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="step1['confirmPassword'].touched && step1Form.errors?.['passwordMismatch']">
+            Passwords do not match
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 2: Address & Personal Details -->
+    <div class="step-content" *ngIf="currentStep === 2">
+      <div class="step-header">
+        <div class="step-icon">🏠</div>
+        <h2>Address & Personal Details</h2>
+        <p>Tell us where you live</p>
+      </div>
+
+      <form [formGroup]="step2Form" class="registration-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="flatNumber">Flat/Unit Number <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="flatNumber" 
+              formControlName="flatNumber"
+              placeholder="e.g., A-101, B-202"
+              [class.error]="step2['flatNumber'].invalid && step2['flatNumber'].touched">
+            <div class="error-message" *ngIf="step2['flatNumber'].invalid && step2['flatNumber'].touched">
+              Flat number is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tower">Tower/Block <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="tower" 
+              formControlName="tower"
+              placeholder="e.g., Tower A, Block 1"
+              [class.error]="step2['tower'].invalid && step2['tower'].touched">
+            <div class="error-message" *ngIf="step2['tower'].invalid && step2['tower'].touched">
+              Tower/Block is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="societyId">Society/Complex <span class="required">*</span></label>
+          <select 
+            id="societyId" 
+            formControlName="societyId"
+            (change)="onSocietySelected()"
+            [class.error]="step2['societyId'].invalid && step2['societyId'].touched">
+            <option value="">Select your society</option>
+            <option *ngFor="let society of societies" [value]="society.id">
+              {{ society.name }}<span *ngIf="society.city"> — {{ society.city }}</span>
+            </option>
+          </select>
+          <div class="hint" *ngIf="dropdownsLoading">Loading societies…</div>
+          <div class="hint" *ngIf="!dropdownsLoading && societies.length === 0">
+            No societies found. Ask your admin to create one in Society Setup first.
+          </div>
+          <div class="error-message" *ngIf="step2['societyId'].invalid && step2['societyId'].touched">
+            Please select your society
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="state">State <span class="required">*</span></label>
+            <select 
+              id="state" 
+              formControlName="state"
+              [class.error]="step2['state'].invalid && step2['state'].touched">
+              <option value="">Select state</option>
+              <option *ngFor="let state of states" [value]="state">{{ state }}</option>
+            </select>
+            <div class="hint" *ngIf="dropdownsLoading">Loading states…</div>
+            <div class="hint warning" *ngIf="!dropdownsLoading && dropdownLoadWarning">{{ dropdownLoadWarning }}</div>
+            <div class="error-message" *ngIf="step2['state'].invalid && step2['state'].touched">
+              State is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="city">City <span class="required">*</span></label>
+            <select 
+              id="city" 
+              formControlName="city"
+              [class.error]="step2['city'].invalid && step2['city'].touched"
+              [disabled]="!step2Form.get('state')?.value">
+              <option value="">{{ step2Form.get('state')?.value ? 'Select city' : 'Select state first' }}</option>
+              <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+            </select>
+            <div class="error-message" *ngIf="step2['city'].invalid && step2['city'].touched">
+              City is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pincode">Pincode <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="pincode" 
+            formControlName="pincode"
+            placeholder="6-digit pincode"
+            maxlength="6"
+            (blur)="onPincodeBlur()"
+            [class.error]="step2['pincode'].invalid && step2['pincode'].touched">
+          <div class="hint" *ngIf="pincodeLookupMessage">{{ pincodeLookupMessage }}</div>
+          <div class="error-message" *ngIf="step2['pincode'].invalid && step2['pincode'].touched">
+            <span *ngIf="step2['pincode'].errors?.['required']">Pincode is required</span>
+            <span *ngIf="step2['pincode'].errors?.['pattern']">Please enter a valid 6-digit pincode</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
+            <input 
+              type="date" 
+              id="dateOfBirth" 
+              formControlName="dateOfBirth"
+              [max]="getMaxDate()"
+              [class.error]="step2['dateOfBirth'].invalid && step2['dateOfBirth'].touched">
+            <div class="error-message" *ngIf="step2['dateOfBirth'].invalid && step2['dateOfBirth'].touched">
+              <span *ngIf="step2['dateOfBirth'].errors?.['required']">Date of birth is required</span>
+              <span *ngIf="step2['dateOfBirth'].errors?.['underage']">You must be at least 18 years old</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Gender <span class="required">*</span></label>
+            <select 
+              id="gender" 
+              formControlName="gender"
+              [class.error]="step2['gender'].invalid && step2['gender'].touched">
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            <div class="error-message" *ngIf="step2['gender'].invalid && step2['gender'].touched">
+              Gender is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="occupation">Occupation <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="occupation" 
+            formControlName="occupation"
+            placeholder="Your occupation"
+            [class.error]="step2['occupation'].invalid && step2['occupation'].touched">
+          <div class="error-message" *ngIf="step2['occupation'].invalid && step2['occupation'].touched">
+            Occupation is required
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Document Upload -->
+    <div class="step-content" *ngIf="currentStep === 3">
+      <div class="step-header">
+        <div class="step-icon">📁</div>
+        <h2>Upload Documents</h2>
+        <p>Please upload the following documents for verification</p>
+      </div>
+
+      <div class="documents-upload">
+        <div class="document-card" *ngFor="let doc of requiredDocuments">
+          <div class="document-header">
+            <span class="document-icon">{{ doc.icon }}</span>
+            <div class="document-info">
+              <h3>{{ doc.label }}</h3>
+              <p class="document-requirements">
+                Format: JPG, PNG, PDF | Max size: 5MB
+                <span class="required" *ngIf="doc.required"> (Required)</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group document-type-select" *ngIf="doc.variants.length > 1">
+            <label>Document type <span class="required">*</span></label>
+            <select
+              [(ngModel)]="selectedDocumentVariants[doc.type]"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onDocumentVariantChange(doc.type)">
+              <option *ngFor="let v of doc.variants" [ngValue]="v.value">{{ v.label }}</option>
+            </select>
+            <small class="hint">Upload must match the selected document type (AI verified)</small>
+          </div>
+
+          <div class="validation-error" *ngIf="getSlotValidationError(doc.type)">
+            ❌ {{ getSlotValidationError(doc.type) }}
+          </div>
+
+          <div class="validating-banner" *ngIf="isValidatingSlot(doc.type)">
+            🤖 AI is checking your {{ getVariantLabel(doc.type) }}…
+          </div>
+
+          <div class="document-upload-area" *ngIf="!getUploadedDocument(doc.type) && !isValidatingSlot(doc.type)">
+            <input 
+              type="file" 
+              [id]="'file-' + doc.type"
+              accept=".jpg,.jpeg,.png,.pdf"
+              (change)="onFileSelected($event, doc.type)"
+              style="display: none;">
+            <label [for]="'file-' + doc.type" class="upload-label">
+              <div class="upload-icon">📤</div>
+              <p>Click to upload {{ getVariantLabel(doc.type) }}</p>
+            </label>
+          </div>
+
+          <div class="document-uploaded" *ngIf="getUploadedDocument(doc.type) as uploadedDoc">
+            <div class="uploaded-info">
+              <span class="file-icon">📄</span>
+              <div class="file-details">
+                <p class="file-name">{{ uploadedDoc.fileName }}</p>
+                <p class="file-meta">{{ getVariantLabel(doc.type) }}</p>
+                <p class="file-size">{{ (uploadedDoc.fileSize / 1024).toFixed(2) }} KB</p>
+                <p class="upload-date">Uploaded: {{ uploadedDoc.uploadDate | date: 'short' }}</p>
+                <p class="validation-ok" *ngIf="uploadedDoc.validationConfidence">
+                  ✅ AI verified ({{ uploadedDoc.validationConfidence | number:'1.0-0' }}% match)
+                </p>
+              </div>
+            </div>
+            <button class="remove-button" (click)="removeDocument(uploadedDoc.fileName)">
+              🗑️ Remove
+            </button>
+          </div>
+        </div>
+
+        <div class="upload-note">
+          <p>⚠️ <strong>Important:</strong> AI checks each upload against the document type you selected. Wrong files (e.g. logo as Aadhaar) are rejected automatically.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Document Verification -->
+    <div class="step-content" *ngIf="currentStep === 4">
+      <div class="step-header">
+        <div class="step-icon">✓</div>
+        <h2>Document Verification</h2>
+        <p>We'll verify your uploaded documents using AI</p>
+      </div>
+
+      <div class="verification-section">
+        <div class="verification-info" *ngIf="verificationResults.length === 0">
+          <div class="info-box">
+            <h3>🤖 AI Document Verification</h3>
+            <p>Our AI system will verify your documents for:</p>
+            <ul>
+              <li>✓ Document authenticity</li>
+              <li>✓ Information accuracy</li>
+              <li>✓ Photo quality</li>
+              <li>✓ Data extraction</li>
+            </ul>
+            <p class="verification-time">⏱️ This process typically takes 2-3 seconds</p>
+          </div>
+
+          <button 
+            class="btn btn-primary btn-verify"
+            (click)="verifyDocuments()"
+            [disabled]="isVerifyingDocuments || !areAllDocumentsUploaded()">
+            <span *ngIf="!isVerifyingDocuments">🔍 Start Verification</span>
+            <span *ngIf="isVerifyingDocuments">
+              <span class="spinner"></span> Verifying Documents...
+            </span>
+          </button>
+        </div>
+
+        <div class="verification-results" *ngIf="verificationResults.length > 0">
+          <div class="result-card" 
+               *ngFor="let result of verificationResults"
+               [class.success]="result.success"
+               [class.failed]="!result.success">
+            <div class="result-header">
+              <span class="result-icon">
+                {{ result.success ? '✅' : '❌' }}
+              </span>
+              <div class="result-info">
+                <h3>{{ result.documentType }}</h3>
+                <p [class.success-text]="result.success" [class.error-text]="!result.success">
+                  {{ result.message }}
+                </p>
+              </div>
+              <div class="confidence-badge" *ngIf="result.success">
+                {{ result.confidence.toFixed(1) }}% Match
+              </div>
+            </div>
+
+            <div class="extracted-data" *ngIf="result.success && result.extractedData">
+              <h4>📊 Extracted Information:</h4>
+              <div class="data-grid">
+                <div class="data-item" *ngFor="let item of objectKeys(result.extractedData)">
+                  <span class="data-label">{{ formatKey(item) }}:</span>
+                  <span class="data-value">{{ result.extractedData[item] }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="verification-summary">
+            <div class="summary-card" [class.all-verified]="allDocumentsVerified">
+              <h3>
+                {{ allDocumentsVerified ? '✅ All Documents Verified!' : '⚠️ Some Documents Need Attention' }}
+              </h3>
+              <p *ngIf="allDocumentsVerified">
+                Great! All your documents have been successfully verified. You can proceed to the next step.
+              </p>
+              <p *ngIf="!allDocumentsVerified">
+                Please re-upload the rejected documents with better quality images.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Review & Submit -->
+    <div class="step-content" *ngIf="currentStep === 5">
+      <div class="step-header">
+        <div class="step-icon">📝</div>
+        <h2>Review Your Information</h2>
+        <p>Please review all details before submitting</p>
+      </div>
+
+      <div class="review-section">
+        <!-- Personal Information -->
+        <div class="review-card">
+          <div class="review-header">
+            <h3>👤 Personal Information</h3>
+            <button class="edit-button" (click)="goToStep(1)">✏️ Edit</button>
+          </div>
+          <div class="review-content">
+            <div class="review-item">
+              <span class="label">Name:</span>
+              <span class="value">{{ step1Form.value.firstName }} {{ step1Form.value.lastName }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Email:</span>
+              <span class="value">{{ step1Form.value.email }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Phone:</span>
+              <span class="value">{{ step1Form.value.phone }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">User Type:</span>
+              <span class="value">{{ getUserTypeLabel() }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Status:</span>
+              <span class="value">{{ getUserStatusLabel() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="review-card">
+          <div class="review-header">
+            <h3>🏠 Address Information</h3>
+            <button class="edit-button" (click)="goToStep(2)">✏️ Edit</button>
+          </div>
+          <div class="review-content">
+            <div class="review-item">
+              <span class="label">Flat/Unit:</span>
+              <span class="value">{{ step2Form.value.flatNumber }}, {{ step2Form.value.tower }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Society:</span>
+              <span class="value">{{ step2Form.value.society }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Location:</span>
+              <span class="value">{{ step2Form.value.city }}, {{ step2Form.value.state }} - {{ step2Form.value.pincode }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Date of Birth:</span>
+              <span class="value">{{ step2Form.value.dateOfBirth | date: 'mediumDate' }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Gender:</span>
+              <span class="value">{{ step2Form.value.gender }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Occupation:</span>
+              <span class="value">{{ step2Form.value.occupation }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="review-card">
+          <div class="review-header">
+            <h3>📄 Uploaded Documents</h3>
+            <button class="edit-button" (click)="goToStep(3)">✏️ Edit</button>
+          </div>
+          <div class="review-content">
+            <div class="document-list">
+              <div class="document-item" *ngFor="let doc of uploadedDocuments">
+                <span class="doc-icon">✅</span>
+                <div class="doc-info">
+                  <p class="doc-type">{{ doc.documentType }}</p>
+                  <p class="doc-name">{{ doc.fileName }}</p>
+                </div>
+                <span class="verification-badge verified">Verified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="terms-section">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="termsAccepted">
+            <span>I agree to the <a href="#" (click)="$event.preventDefault()">Terms & Conditions</a> and <a href="#" (click)="$event.preventDefault()">Privacy Policy</a></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="isLoading || isSavingStep || isSubmitting">
+      <div class="loading-content">
+        <div class="spinner-large"></div>
+        <p *ngIf="isLoading">Uploading document...</p>
+        <p *ngIf="isSavingStep">Saving your information...</p>
+        <p *ngIf="isSubmitting">Submitting registration...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Footer -->
+  <div class="registration-footer">
+    <button 
+      class="btn btn-secondary"
+      *ngIf="currentStep > 1"
+      (click)="previousStep()"
+      [disabled]="isSavingStep || isSubmitting">
+      ← Previous
+    </button>
+
+    <button 
+      class="btn btn-primary"
+      *ngIf="currentStep < 5"
+      (click)="nextStep()"
+      [disabled]="isSavingStep || isVerifyingDocuments || (currentStep === 4 && !allDocumentsVerified)">
+      <span *ngIf="!isSavingStep">
+        Next →
+      </span>
+      <span *ngIf="isSavingStep">
+        <span class="spinner"></span> Saving...
+      </span>
+    </button>
+
+    <button 
+      class="btn btn-success"
+      *ngIf="currentStep === 5"
+      (click)="submitRegistration()"
+      [disabled]="isSubmitting || !termsAccepted">
+      <span *ngIf="!isSubmitting">
+        🎉 Submit Registration
+      </span>
+      <span *ngIf="isSubmitting">
+        <span class="spinner"></span> Submitting...
+      </span>
+    </button>
+  </div>
+</div>

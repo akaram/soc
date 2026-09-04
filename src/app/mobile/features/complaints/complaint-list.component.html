@@ -1,0 +1,20 @@
+<div class="complaint-list-container">
+  <div class="page-header">
+    <h2>Complaints</h2>
+    <a class="btn-add" routerLink="/mobile/complaints/add">+</a>
+  </div>
+  <div class="hint" *ngIf="!societyId">Sign in and select a society to load complaints.</div>
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="loading" *ngIf="loading">Loading</div>
+  <ul class="list" *ngIf="!loading && societyId">
+    <li *ngFor="let c of complaints" class="card" [routerLink]="['/mobile/complaints/detail', c.id]">
+      <div class="card-top">
+        <span class="num">{{ c.complaintNumber }}</span>
+        <span class="status" [ngClass]="statusClass(c.status)">{{ c.status }}</span>
+      </div>
+      <div class="title">{{ c.title }}</div>
+      <div class="meta">{{ c.category }} - {{ c.priority }}</div>
+    </li>
+    <li *ngIf="complaints.length === 0" class="empty">No complaints yet.</li>
+  </ul>
+</div>

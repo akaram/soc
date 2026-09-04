@@ -1,0 +1,752 @@
+<div class="family-management-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>👨‍👩‍👧‍👦 Family Members</h1>
+      <p>Manage family member profiles and information</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openAddModal()">
+        ➕ Add Family Member
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="statistics-grid" *ngIf="statistics">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.totalMembers }}</div>
+        <div class="stat-label">Total Members</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">♂</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.maleCount }}</div>
+        <div class="stat-label">Male</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">♀</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.femaleCount }}</div>
+        <div class="stat-label">Female</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👶</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.childrenCount }}</div>
+        <div class="stat-label">Children</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👨</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.adultsCount }}</div>
+        <div class="stat-label">Adults</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👴</div>
+      <div class="stat-details">
+        <div class="stat-value">{{ statistics.seniorsCount }}</div>
+        <div class="stat-label">Seniors</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="🔍 Search by name, email, phone, occupation..."
+        class="search-input">
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filterUnitId" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">All Units</option>
+        <option value="UNIT-001">A-101</option>
+        <option value="UNIT-002">B-205</option>
+        <option value="UNIT-003">C-310</option>
+        <option value="UNIT-004">D-405</option>
+        <option value="UNIT-005">E-501</option>
+      </select>
+
+      <select [(ngModel)]="filterRelationship" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">All Relationships</option>
+        <option *ngFor="let rel of relationships" [value]="rel">{{ formatLabel(rel) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterGender" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">All Genders</option>
+        <option *ngFor="let gender of genders" [value]="gender">{{ formatLabel(gender) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterAgeGroup" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">All Ages</option>
+        <option *ngFor="let age of ageGroups" [value]="age">{{ formatLabel(age) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">All Status</option>
+        <option *ngFor="let status of statuses" [value]="status">{{ formatLabel(status) }}</option>
+      </select>
+
+      <button class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+    </div>
+
+    <div class="view-options">
+      <div class="view-toggle">
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'card'"
+          (click)="viewMode = 'card'">
+          📋 Cards
+        </button>
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'table'"
+          (click)="viewMode = 'table'">
+          📊 Table
+        </button>
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'family-tree'"
+          (click)="viewMode = 'family-tree'">
+          🌳 Family Tree
+        </button>
+      </div>
+
+      <button 
+        class="btn btn-outline"
+        (click)="toggleGroupByUnit()">
+        {{ groupByUnit ? '📂 Ungroup' : '📁 Group by Unit' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading family members...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && filteredMembers.length === 0">
+    <div class="empty-icon">👨‍👩‍👧‍👦</div>
+    <h2>No Family Members Found</h2>
+    <p *ngIf="searchTerm || filterUnitId || filterRelationship || filterGender || filterAgeGroup || filterStatus">
+      Try adjusting your filters
+    </p>
+    <p *ngIf="!searchTerm && !filterUnitId && !filterRelationship && !filterGender && !filterAgeGroup && !filterStatus">
+      Start by adding your first family member
+    </p>
+    <button class="btn btn-primary" (click)="openAddModal()">
+      ➕ Add First Member
+    </button>
+  </div>
+
+  <!-- Card View -->
+  <div class="members-grid" *ngIf="!isLoading && viewMode === 'card' && !groupByUnit && filteredMembers.length > 0">
+    <div class="member-card" *ngFor="let member of filteredMembers">
+      <div class="card-header" [class.primary]="member.isPrimaryResident">
+        <div class="member-avatar">
+          <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+          <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+            {{ member.firstName.charAt(0) }}{{ member.lastName.charAt(0) }}
+          </div>
+        </div>
+        <div class="member-basic-info">
+          <h3>{{ member.fullName }}</h3>
+          <p class="relationship">
+            <span class="rel-icon">{{ getRelationshipIcon(member.relationship) }}</span>
+            {{ formatLabel(member.relationship) }}
+          </p>
+        </div>
+        <div class="card-badges">
+          <span class="badge" [ngClass]="getStatusClass(member.status)">
+            {{ formatLabel(member.status) }}
+          </span>
+          <span class="badge badge-primary" *ngIf="member.isPrimaryResident">
+            👑 Primary
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="icon">📅</span>
+          <span class="label">Age:</span>
+          <span class="value">{{ member.age }} years ({{ getAgeGroupLabel(member.age) }})</span>
+        </div>
+
+        <div class="info-row">
+          <span class="icon">{{ getGenderIcon(member.gender) }}</span>
+          <span class="label">Gender:</span>
+          <span class="value">{{ formatLabel(member.gender) }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="member.bloodGroup">
+          <span class="icon">🩸</span>
+          <span class="label">Blood Group:</span>
+          <span class="value">{{ member.bloodGroup }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="member.phoneNumber">
+          <span class="icon">📱</span>
+          <span class="label">Phone:</span>
+          <span class="value">{{ member.phoneNumber }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="member.email">
+          <span class="icon">📧</span>
+          <span class="label">Email:</span>
+          <span class="value">{{ member.email }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="member.occupation">
+          <span class="icon">💼</span>
+          <span class="label">Occupation:</span>
+          <span class="value">{{ member.occupation }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="icon">🏠</span>
+          <span class="label">Unit:</span>
+          <span class="value">{{ member.unitNumber }}</span>
+        </div>
+
+        <div class="access-indicators">
+          <div class="access-item" [class.enabled]="member.hasGateAccess">
+            <span class="access-icon">🚪</span>
+            <span class="access-label">Gate Access</span>
+          </div>
+          <div class="access-item" [class.enabled]="member.hasAmenityAccess">
+            <span class="access-icon">🏊</span>
+            <span class="access-label">Amenity Access</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn btn-sm btn-outline" (click)="viewDetails(member)">
+          👁️ View Details
+        </button>
+        <button class="btn btn-sm btn-primary" (click)="openEditModal(member)">
+          ✏️ Edit
+        </button>
+        <button class="btn btn-sm btn-danger" (click)="deleteMember(member)" *ngIf="!member.isPrimaryResident">
+          🗑️ Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grouped Card View -->
+  <div class="grouped-members" *ngIf="!isLoading && viewMode === 'card' && groupByUnit && filteredMembers.length > 0">
+    <div class="unit-group" *ngFor="let unitId of groupedUnitIds">
+      <div class="unit-header">
+        <h2>🏠 Unit {{ groupedMembers[unitId][0].unitNumber }}</h2>
+        <span class="member-count">{{ groupedMembers[unitId].length }} members</span>
+      </div>
+      
+      <div class="members-grid">
+        <div class="member-card" *ngFor="let member of groupedMembers[unitId]">
+          <!-- Same card structure as above -->
+          <div class="card-header" [class.primary]="member.isPrimaryResident">
+            <div class="member-avatar">
+              <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+              <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+                {{ member.firstName.charAt(0) }}{{ member.lastName.charAt(0) }}
+              </div>
+            </div>
+            <div class="member-basic-info">
+              <h3>{{ member.fullName }}</h3>
+              <p class="relationship">
+                <span class="rel-icon">{{ getRelationshipIcon(member.relationship) }}</span>
+                {{ formatLabel(member.relationship) }}
+              </p>
+            </div>
+            <div class="card-badges">
+              <span class="badge" [ngClass]="getStatusClass(member.status)">
+                {{ formatLabel(member.status) }}
+              </span>
+              <span class="badge badge-primary" *ngIf="member.isPrimaryResident">
+                👑 Primary
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <span class="icon">📅</span>
+              <span class="label">Age:</span>
+              <span class="value">{{ member.age }} years</span>
+            </div>
+
+            <div class="info-row">
+              <span class="icon">{{ getGenderIcon(member.gender) }}</span>
+              <span class="label">Gender:</span>
+              <span class="value">{{ formatLabel(member.gender) }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="member.phoneNumber">
+              <span class="icon">📱</span>
+              <span class="label">Phone:</span>
+              <span class="value">{{ member.phoneNumber }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <button class="btn btn-sm btn-outline" (click)="viewDetails(member)">
+              👁️ View
+            </button>
+            <button class="btn btn-sm btn-primary" (click)="openEditModal(member)">
+              ✏️ Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="members-table-container" *ngIf="!isLoading && viewMode === 'table' && filteredMembers.length > 0">
+    <table class="members-table">
+      <thead>
+        <tr>
+          <th>Photo</th>
+          <th>Name</th>
+          <th>Relationship</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Blood Group</th>
+          <th>Contact</th>
+          <th>Unit</th>
+          <th>Access</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of filteredMembers">
+          <td>
+            <div class="table-avatar">
+              <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+              <div *ngIf="!member.profilePhoto" class="avatar-placeholder-sm">
+                {{ member.firstName.charAt(0) }}
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>{{ member.fullName }}</strong>
+            <span class="badge badge-primary" *ngIf="member.isPrimaryResident">👑</span>
+          </td>
+          <td>
+            <span class="rel-icon">{{ getRelationshipIcon(member.relationship) }}</span>
+            {{ formatLabel(member.relationship) }}
+          </td>
+          <td>{{ member.age }}</td>
+          <td>
+            <span class="gender-icon">{{ getGenderIcon(member.gender) }}</span>
+            {{ formatLabel(member.gender) }}
+          </td>
+          <td>{{ member.bloodGroup || '-' }}</td>
+          <td>
+            <div *ngIf="member.phoneNumber">📱 {{ member.phoneNumber }}</div>
+            <div *ngIf="member.email" class="small-text">📧 {{ member.email }}</div>
+          </td>
+          <td>{{ member.unitNumber }}</td>
+          <td>
+            <div class="access-badges">
+              <span class="access-badge" [class.enabled]="member.hasGateAccess">🚪</span>
+              <span class="access-badge" [class.enabled]="member.hasAmenityAccess">🏊</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(member.status)">
+              {{ formatLabel(member.status) }}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm" (click)="viewDetails(member)">View</button>
+            <button class="btn btn-sm" (click)="openEditModal(member)">Edit</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Family Tree View -->
+  <div class="family-tree-view" *ngIf="!isLoading && viewMode === 'family-tree' && filteredMembers.length > 0">
+    <div class="tree-unit-group" *ngFor="let unitId of groupedUnitIds">
+      <div class="tree-unit-header">
+        <h2>Unit {{ groupedMembers[unitId][0].unitNumber }}</h2>
+      </div>
+      
+      <div class="tree-container">
+        <div class="tree-members">
+          <!-- Primary Resident -->
+          <div class="tree-member primary" *ngFor="let member of groupedMembers[unitId]">
+            <div class="tree-member-card" *ngIf="member.isPrimaryResident">
+              <div class="tree-avatar">
+                <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+                <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+                  {{ member.firstName.charAt(0) }}
+                </div>
+              </div>
+              <h4>{{ member.fullName }}</h4>
+              <p>{{ formatLabel(member.relationship) }}</p>
+              <p class="age-info">{{ member.age }} years</p>
+            </div>
+          </div>
+
+          <!-- Spouse -->
+          <div class="tree-member spouse" *ngFor="let member of groupedMembers[unitId]">
+            <div class="tree-member-card" *ngIf="member.relationship === 'SPOUSE'">
+              <div class="tree-avatar">
+                <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+                <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+                  {{ member.firstName.charAt(0) }}
+                </div>
+              </div>
+              <h4>{{ member.fullName }}</h4>
+              <p>{{ formatLabel(member.relationship) }}</p>
+              <p class="age-info">{{ member.age }} years</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Children -->
+        <div class="tree-children">
+          <div class="tree-member child" *ngFor="let member of groupedMembers[unitId]">
+            <div class="tree-member-card" *ngIf="member.relationship === 'SON' || member.relationship === 'DAUGHTER'">
+              <div class="tree-avatar">
+                <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+                <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+                  {{ member.firstName.charAt(0) }}
+                </div>
+              </div>
+              <h4>{{ member.fullName }}</h4>
+              <p>{{ formatLabel(member.relationship) }}</p>
+              <p class="age-info">{{ member.age }} years</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parents/Grandparents -->
+        <div class="tree-elders">
+          <div class="tree-member elder" *ngFor="let member of groupedMembers[unitId]">
+            <div class="tree-member-card" *ngIf="member.relationship === 'FATHER' || member.relationship === 'MOTHER' || 
+                                                    member.relationship === 'GRANDFATHER' || member.relationship === 'GRANDMOTHER'">
+              <div class="tree-avatar">
+                <img *ngIf="member.profilePhoto" [src]="member.profilePhoto" [alt]="member.fullName">
+                <div *ngIf="!member.profilePhoto" class="avatar-placeholder">
+                  {{ member.firstName.charAt(0) }}
+                </div>
+              </div>
+              <h4>{{ member.fullName }}</h4>
+              <p>{{ formatLabel(member.relationship) }}</p>
+              <p class="age-info">{{ member.age }} years</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModal()">
+  <div class="modal-content detail-modal" (click)="$event.stopPropagation()" *ngIf="selectedMember">
+    <div class="modal-header">
+      <h2>Family Member Details</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Member Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar-large">
+          <img *ngIf="selectedMember.profilePhoto" [src]="selectedMember.profilePhoto" [alt]="selectedMember.fullName">
+          <div *ngIf="!selectedMember.profilePhoto" class="avatar-placeholder-large">
+            {{ selectedMember.firstName.charAt(0) }}{{ selectedMember.lastName.charAt(0) }}
+          </div>
+        </div>
+        <div class="profile-info">
+          <h2>{{ selectedMember.fullName }}</h2>
+          <p class="relationship-large">
+            <span class="rel-icon">{{ getRelationshipIcon(selectedMember.relationship) }}</span>
+            {{ formatLabel(selectedMember.relationship) }}
+          </p>
+          <div class="profile-badges">
+            <span class="badge" [ngClass]="getStatusClass(selectedMember.status)">
+              {{ formatLabel(selectedMember.status) }}
+            </span>
+            <span class="badge badge-primary" *ngIf="selectedMember.isPrimaryResident">
+              👑 Primary Resident
+            </span>
+            <span class="badge badge-info" *ngIf="selectedMember.isOwner">
+              🏠 Owner
+            </span>
+            <span class="badge badge-warning" *ngIf="selectedMember.isTenant">
+              📝 Tenant
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Basic Information -->
+      <div class="detail-section">
+        <h3>Basic Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Full Name:</label>
+            <span class="info-value">{{ selectedMember.fullName }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Date of Birth:</label>
+            <span class="info-value">{{ formatDate(selectedMember.dateOfBirth) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Age:</label>
+            <span class="info-value">{{ selectedMember.age }} years ({{ getAgeGroupLabel(selectedMember.age) }})</span>
+          </div>
+          <div class="detail-item">
+            <label>Gender:</label>
+            <span class="info-value">{{ formatLabel(selectedMember.gender) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.bloodGroup">
+            <label>Blood Group:</label>
+            <span class="info-value">{{ selectedMember.bloodGroup }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.occupation">
+            <label>Occupation:</label>
+            <span class="info-value">{{ selectedMember.occupation }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="detail-section" *ngIf="selectedMember.phoneNumber || selectedMember.email">
+        <h3>Contact Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="selectedMember.phoneNumber">
+            <label>Phone Number:</label>
+            <span class="info-value">📱 {{ selectedMember.phoneNumber }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.alternatePhone">
+            <label>Alternate Phone:</label>
+            <span class="info-value">📱 {{ selectedMember.alternatePhone }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.email">
+            <label>Email:</label>
+            <span class="info-value">📧 {{ selectedMember.email }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Unit:</label>
+            <span class="info-value">🏠 {{ selectedMember.unitNumber }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employment Information -->
+      <div class="detail-section" *ngIf="selectedMember.employmentInfo as emp">
+        <h3>Employment Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="emp.companyName">
+            <label>Company:</label>
+            <span class="info-value">{{ emp.companyName }}</span>
+          </div>
+          <div class="detail-item" *ngIf="emp.designation">
+            <label>Designation:</label>
+            <span class="info-value">{{ emp.designation }}</span>
+          </div>
+          <div class="detail-item" *ngIf="emp.workEmail">
+            <label>Work Email:</label>
+            <span class="info-value">{{ emp.workEmail }}</span>
+          </div>
+          <div class="detail-item" *ngIf="emp.officePhone">
+            <label>Office Phone:</label>
+            <span class="info-value">{{ emp.officePhone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education Information -->
+      <div class="detail-section" *ngIf="selectedMember.educationInfo as edu">
+        <h3>Education Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="edu.schoolName">
+            <label>School:</label>
+            <span class="info-value">{{ edu.schoolName }}</span>
+          </div>
+          <div class="detail-item" *ngIf="edu.class">
+            <label>Class:</label>
+            <span class="info-value">{{ edu.class }}</span>
+          </div>
+          <div class="detail-item" *ngIf="edu.board">
+            <label>Board:</label>
+            <span class="info-value">{{ edu.board }}</span>
+          </div>
+          <div class="detail-item" *ngIf="edu.schoolPhone">
+            <label>School Phone:</label>
+            <span class="info-value">{{ edu.schoolPhone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health Information -->
+      <div class="detail-section" *ngIf="selectedMember.healthInfo as health">
+        <h3>Health Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item full-width" *ngIf="health.allergies?.length">
+            <label>Allergies:</label>
+            <span class="info-value">{{ health.allergies?.join(', ') }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="health.medications?.length">
+            <label>Medications:</label>
+            <span class="info-value">{{ health.medications?.join(', ') }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="health.medicalConditions?.length">
+            <label>Medical Conditions:</label>
+            <span class="info-value">{{ health.medicalConditions?.join(', ') }}</span>
+          </div>
+          <div class="detail-item" *ngIf="health.doctorName">
+            <label>Doctor:</label>
+            <span class="info-value">{{ health.doctorName }}</span>
+          </div>
+          <div class="detail-item" *ngIf="health.doctorPhone">
+            <label>Doctor Phone:</label>
+            <span class="info-value">{{ health.doctorPhone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="detail-section" *ngIf="selectedMember.emergencyContact as emergency">
+        <h3>Emergency Contact</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Name:</label>
+            <span class="info-value">{{ emergency.name }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Relationship:</label>
+            <span class="info-value">{{ emergency.relationship }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Phone:</label>
+            <span class="info-value">📱 {{ emergency.phoneNumber }}</span>
+          </div>
+          <div class="detail-item" *ngIf="emergency.alternatePhone">
+            <label>Alternate Phone:</label>
+            <span class="info-value">📱 {{ emergency.alternatePhone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access & Permissions -->
+      <div class="detail-section">
+        <h3>Access & Permissions</h3>
+        <div class="permissions-grid">
+          <div class="permission-item" [class.enabled]="selectedMember.hasGateAccess">
+            <span class="permission-icon">🚪</span>
+            <span class="permission-label">Gate Access</span>
+            <span class="permission-status">{{ selectedMember.hasGateAccess ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+          <div class="permission-item" [class.enabled]="selectedMember.hasAmenityAccess">
+            <span class="permission-icon">🏊</span>
+            <span class="permission-label">Amenity Access</span>
+            <span class="permission-status">{{ selectedMember.hasAmenityAccess ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+          <div class="permission-item" [class.enabled]="selectedMember.canRaiseComplaints">
+            <span class="permission-icon">📝</span>
+            <span class="permission-label">Raise Complaints</span>
+            <span class="permission-status">{{ selectedMember.canRaiseComplaints ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+          <div class="permission-item" [class.enabled]="selectedMember.canBookAmenities">
+            <span class="permission-icon">📅</span>
+            <span class="permission-label">Book Amenities</span>
+            <span class="permission-status">{{ selectedMember.canBookAmenities ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+          <div class="permission-item" [class.enabled]="selectedMember.isAuthorizedForPayments">
+            <span class="permission-icon">💳</span>
+            <span class="permission-label">Authorized for Payments</span>
+            <span class="permission-status">{{ selectedMember.isAuthorizedForPayments ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="detail-section">
+        <h3>Record Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Added By:</label>
+            <span class="info-value">{{ selectedMember.addedBy }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Added Date:</label>
+            <span class="info-value">{{ formatDate(selectedMember.addedDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Last Modified:</label>
+            <span class="info-value">{{ formatDate(selectedMember.lastModified) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Modified By:</label>
+            <span class="info-value">{{ selectedMember.modifiedBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="detail-section" *ngIf="selectedMember.remarks">
+        <h3>Remarks</h3>
+        <p class="remarks-text">{{ selectedMember.remarks }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+      <button class="btn btn-primary" (click)="openEditModal(selectedMember); closeModal()">
+        ✏️ Edit Member
+      </button>
+      <button class="btn btn-danger" (click)="deleteMember(selectedMember)" *ngIf="!selectedMember.isPrimaryResident">
+        🗑️ Delete Member
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal Placeholder -->
+<div class="modal-overlay" *ngIf="showAddModal || showEditModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ showAddModal ? 'Add Family Member' : 'Edit Family Member' }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="info-message">
+        Form component will be created separately for add/edit functionality.
+        Click "Add Form Component" button in the documentation to generate the form.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</div>

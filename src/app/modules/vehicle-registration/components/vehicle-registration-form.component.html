@@ -1,0 +1,469 @@
+<div class="vehicle-registration-container">
+  <div class="registration-header">
+    <h1>Vehicle Registration</h1>
+    <p>Register your vehicle with RFID/FASTag integration</p>
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="progress-section">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+    </div>
+    <div class="progress-steps">
+      <div 
+        class="step" 
+        [class.active]="currentStep >= 1"
+        [class.completed]="currentStep > 1"
+        (click)="goToStep(1)">
+        <div class="step-number">1</div>
+        <div class="step-label">Vehicle Details</div>
+      </div>
+      <div 
+        class="step" 
+        [class.active]="currentStep >= 2"
+        [class.completed]="currentStep > 2"
+        (click)="goToStep(2)">
+        <div class="step-number">2</div>
+        <div class="step-label">Owner Info</div>
+      </div>
+      <div 
+        class="step" 
+        [class.active]="currentStep >= 3"
+        [class.completed]="currentStep > 3"
+        (click)="goToStep(3)">
+        <div class="step-number">3</div>
+        <div class="step-label">RFID/FASTag</div>
+      </div>
+      <div 
+        class="step" 
+        [class.active]="currentStep >= 4"
+        [class.completed]="currentStep > 4"
+        (click)="goToStep(4)">
+        <div class="step-number">4</div>
+        <div class="step-label">Documents & Review</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div class="success-message" *ngIf="submitSuccess">
+    <div class="success-icon">✓</div>
+    <h2>Vehicle Registered Successfully!</h2>
+    <p>Vehicle ID: <strong>{{ registeredVehicleId }}</strong></p>
+    <p>Your vehicle registration is pending admin approval.</p>
+    <button class="btn btn-primary" (click)="resetForm()">Register Another Vehicle</button>
+  </div>
+
+  <!-- Registration Form -->
+  <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()" *ngIf="!submitSuccess">
+    
+    <!-- Step 1: Vehicle Details -->
+    <div class="form-step" *ngIf="currentStep === 1">
+      <h2>Vehicle Details</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Registration Number <span class="required">*</span></label>
+          <input 
+            type="text" 
+            formControlName="registrationNumber"
+            placeholder="MH12AB1234"
+            class="form-control"
+            [class.invalid]="registrationForm.get('registrationNumber')?.invalid && 
+                            registrationForm.get('registrationNumber')?.touched">
+          <small class="hint">Format: XX00XX0000 (e.g., MH12AB1234)</small>
+          <div class="error-message" 
+               *ngIf="registrationForm.get('registrationNumber')?.invalid && 
+                      registrationForm.get('registrationNumber')?.touched">
+            Please enter a valid registration number
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Vehicle Type <span class="required">*</span></label>
+          <select formControlName="vehicleType" class="form-control">
+            <option *ngFor="let type of vehicleTypes" [value]="type">
+              {{ getVehicleTypeLabel(type) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Make <span class="required">*</span></label>
+          <select formControlName="make" class="form-control">
+            <option value="">Select Make</option>
+            <option *ngFor="let make of vehicleMakes" [value]="make">{{ make }}</option>
+          </select>
+          <div class="error-message" 
+               *ngIf="registrationForm.get('make')?.invalid && 
+                      registrationForm.get('make')?.touched">
+            Please select vehicle make
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Model <span class="required">*</span></label>
+          <input 
+            type="text" 
+            formControlName="model"
+            placeholder="Swift, Activa, Creta, etc."
+            class="form-control"
+            [class.invalid]="registrationForm.get('model')?.invalid && 
+                            registrationForm.get('model')?.touched">
+          <div class="error-message" 
+               *ngIf="registrationForm.get('model')?.invalid && 
+                      registrationForm.get('model')?.touched">
+            Please enter vehicle model
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Color <span class="required">*</span></label>
+          <input 
+            type="text" 
+            formControlName="color"
+            placeholder="Red, Blue, White, etc."
+            class="form-control"
+            [class.invalid]="registrationForm.get('color')?.invalid && 
+                            registrationForm.get('color')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Year <span class="required">*</span></label>
+          <input 
+            type="number" 
+            formControlName="year"
+            class="form-control"
+            [class.invalid]="registrationForm.get('year')?.invalid && 
+                            registrationForm.get('year')?.touched">
+          <div class="error-message" 
+               *ngIf="registrationForm.get('year')?.invalid && 
+                      registrationForm.get('year')?.touched">
+            Please enter valid year
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="!isStep1Valid">
+          Next Step →
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Owner Details -->
+    <div class="form-step" *ngIf="currentStep === 2">
+      <h2>Owner Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Resident / Owner <span class="required">*</span></label>
+          <select
+            formControlName="ownerId"
+            class="form-control"
+            (change)="onOwnerSelected(registrationForm.get('ownerId')?.value)"
+            [class.invalid]="registrationForm.get('ownerId')?.invalid &&
+                            registrationForm.get('ownerId')?.touched">
+            <option value="">Select registered resident</option>
+            <option *ngFor="let resident of societyResidents" [value]="resident.id">
+              {{ residentLabel(resident) }}
+            </option>
+          </select>
+          <small class="hint">Choose a society user — not a free-text ID</small>
+          <div class="error-message residents-error" *ngIf="residentsLoadError">{{ residentsLoadError }}</div>
+          <div class="error-message"
+               *ngIf="registrationForm.get('ownerId')?.invalid &&
+                      registrationForm.get('ownerId')?.touched">
+            Please select the vehicle owner
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Owner Name <span class="required">*</span></label>
+          <input
+            type="text"
+            formControlName="ownerName"
+            placeholder="Filled from resident selection"
+            class="form-control"
+            readonly
+            [class.invalid]="registrationForm.get('ownerName')?.invalid &&
+                            registrationForm.get('ownerName')?.touched">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Owner Type <span class="required">*</span></label>
+          <select formControlName="ownerType" class="form-control">
+            <option *ngFor="let type of ownerTypes" [value]="type">
+              {{ getOwnerTypeLabel(type) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Unit Number</label>
+          <input 
+            type="text" 
+            formControlName="unitNumber"
+            placeholder="A-101"
+            class="form-control">
+          <small class="hint">Your flat/unit number</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label>Parking Slot</label>
+          <select formControlName="parkingSlot" class="form-control">
+            <option value="">Select Parking Slot (Optional)</option>
+            <option *ngFor="let slot of parkingSlots" [value]="slot">{{ slot }}</option>
+          </select>
+          <small class="hint">Assigned parking slot for your vehicle</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="previousStep()">
+          ← Previous
+        </button>
+        <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="!isStep2Valid">
+          Next Step →
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: RFID/FASTag -->
+    <div class="form-step" *ngIf="currentStep === 3">
+      <h2>RFID & FASTag Integration</h2>
+      
+      <!-- RFID Section -->
+      <div class="integration-section">
+        <div class="section-header">
+          <h3>🏷️ RFID Tag</h3>
+          <label class="toggle-switch">
+            <input type="checkbox" formControlName="requestRFID">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="section-content" *ngIf="registrationForm.get('requestRFID')?.value">
+          <div class="info-box">
+            <p><strong>RFID Tag Benefits:</strong></p>
+            <ul>
+              <li>Automated gate entry/exit</li>
+              <li>Quick vehicle identification</li>
+              <li>Enhanced security</li>
+              <li>Access logs and analytics</li>
+            </ul>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tag Type</label>
+              <select formControlName="rfidTagType" class="form-control">
+                <option *ngFor="let type of rfidTagTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Validity (Months)</label>
+              <input 
+                type="number" 
+                formControlName="rfidValidityMonths"
+                class="form-control"
+                min="1"
+                max="60">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASTag Section -->
+      <div class="integration-section">
+        <div class="section-header">
+          <h3>💳 FASTag</h3>
+          <label class="toggle-switch">
+            <input type="checkbox" formControlName="requestFASTag">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        
+        <div class="section-content" *ngIf="registrationForm.get('requestFASTag')?.value">
+          <div class="info-box">
+            <p><strong>FASTag Benefits:</strong></p>
+            <ul>
+              <li>Cashless toll payments</li>
+              <li>No waiting at toll plazas</li>
+              <li>Digital payment records</li>
+              <li>Easy recharge options</li>
+            </ul>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>FASTag Number <span class="required">*</span></label>
+              <input 
+                type="text" 
+                formControlName="fasTagNumber"
+                placeholder="FAST12345678"
+                class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label>Account ID <span class="required">*</span></label>
+              <input 
+                type="text" 
+                formControlName="fasTagAccountId"
+                placeholder="ACC-123456"
+                class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bank Name <span class="required">*</span></label>
+              <input 
+                type="text" 
+                formControlName="fasTagBankName"
+                placeholder="HDFC Bank"
+                class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label>Vehicle Class <span class="required">*</span></label>
+              <select formControlName="fasTagVehicleClass" class="form-control">
+                <option value="">Select Class</option>
+                <option value="Car/Jeep/Van">Car/Jeep/Van</option>
+                <option value="Light Commercial Vehicle">Light Commercial Vehicle</option>
+                <option value="Bus/Truck">Bus/Truck</option>
+                <option value="Heavy Commercial Vehicle">Heavy Commercial Vehicle</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="previousStep()">
+          ← Previous
+        </button>
+        <button type="button" class="btn btn-primary" (click)="nextStep()">
+          Next Step →
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Documents & Review -->
+    <div class="form-step" *ngIf="currentStep === 4">
+      <h2>Documents Upload & Review</h2>
+      
+      <!-- Document Upload -->
+      <div class="upload-section">
+        <h3>Upload Documents</h3>
+        <div class="upload-info">
+          <p>Required documents:</p>
+          <ul>
+            <li>Registration Certificate (RC)</li>
+            <li>Driving License</li>
+            <li>Insurance Certificate</li>
+            <li>PUC Certificate</li>
+            <li>ID Proof</li>
+          </ul>
+          <p class="note">Maximum file size: 5MB per document</p>
+        </div>
+
+        <div class="file-upload">
+          <input 
+            type="file" 
+            id="fileUpload" 
+            multiple 
+            (change)="onFileSelected($event)"
+            accept=".pdf,.jpg,.jpeg,.png"
+            style="display: none;">
+          <label for="fileUpload" class="upload-btn">
+            📁 Choose Files
+          </label>
+        </div>
+
+        <div class="uploaded-files" *ngIf="selectedFiles.length > 0">
+          <h4>Selected Files ({{ selectedFiles.length }})</h4>
+          <div class="file-list">
+            <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
+              <span class="file-icon">📄</span>
+              <div class="file-info">
+                <div class="file-name">{{ file.name }}</div>
+                <div class="file-size">{{ getFileSize(file.size) }}</div>
+              </div>
+              <button type="button" class="remove-btn" (click)="removeFile(i)">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Remarks -->
+      <div class="form-group full-width">
+        <label>Remarks / Additional Information</label>
+        <textarea 
+          formControlName="remarks"
+          rows="4"
+          class="form-control"
+          placeholder="Any additional information or special requests..."></textarea>
+      </div>
+
+      <!-- Registration Summary -->
+      <div class="summary-section">
+        <h3>Registration Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label>Registration Number:</label>
+            <span class="summary-value">{{ registrationForm.get('registrationNumber')?.value || '-' }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Vehicle Type:</label>
+            <span class="summary-value">{{ getVehicleTypeLabel(registrationForm.get('vehicleType')?.value) }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Make & Model:</label>
+            <span class="summary-value">{{ registrationForm.get('make')?.value }} {{ registrationForm.get('model')?.value }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Owner:</label>
+            <span class="summary-value">{{ registrationForm.get('ownerName')?.value }}</span>
+          </div>
+          <div class="summary-item">
+            <label>RFID Requested:</label>
+            <span class="summary-value">{{ registrationForm.get('requestRFID')?.value ? 'Yes' : 'No' }}</span>
+          </div>
+          <div class="summary-item">
+            <label>FASTag Requested:</label>
+            <span class="summary-value">{{ registrationForm.get('requestFASTag')?.value ? 'Yes' : 'No' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-box" *ngIf="submitError">
+        <span class="error-icon">⚠️</span>
+        {{ submitError }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="previousStep()">
+          ← Previous
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-success" 
+          [disabled]="isSubmitting || registrationForm.invalid">
+          <span *ngIf="!isSubmitting">✓ Submit Registration</span>
+          <span *ngIf="isSubmitting">⏳ Submitting...</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

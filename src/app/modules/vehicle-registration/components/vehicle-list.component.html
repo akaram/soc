@@ -1,0 +1,393 @@
+<div class="vehicle-list-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>🚗 Registered Vehicles</h1>
+      <p>Total: {{ filteredVehicles.length }} vehicles</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-scan" (click)="scanRFID()">
+        📡 Scan RFID
+      </button>
+      <button class="btn btn-primary" routerLink="/admin/vehicles/register">
+        ➕ Register New Vehicle
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="🔍 Search by registration, owner, make, model..."
+        class="search-input">
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filterVehicleType" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Types</option>
+        <option *ngFor="let type of vehicleTypes" [value]="type">{{ formatLabel(type) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterApprovalStatus" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Approvals</option>
+        <option *ngFor="let status of approvalStatuses" [value]="status">{{ formatLabel(status) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterVehicleStatus" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Status</option>
+        <option *ngFor="let status of vehicleStatuses" [value]="status">{{ formatLabel(status) }}</option>
+      </select>
+
+      <button class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+    </div>
+
+    <div class="view-toggle">
+      <button 
+        class="view-btn" 
+        [class.active]="viewMode === 'card'"
+        (click)="viewMode = 'card'">
+        📋 Cards
+      </button>
+      <button 
+        class="view-btn" 
+        [class.active]="viewMode === 'table'"
+        (click)="viewMode = 'table'">
+        📊 Table
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading vehicles...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && filteredVehicles.length === 0">
+    <div class="empty-icon">🚗</div>
+    <h2>No Vehicles Found</h2>
+    <p *ngIf="searchTerm || filterVehicleType !== 'ALL' || filterApprovalStatus !== 'ALL' || filterVehicleStatus !== 'ALL'">
+      Try adjusting your filters
+    </p>
+    <p *ngIf="!searchTerm && filterVehicleType === 'ALL' && filterApprovalStatus === 'ALL' && filterVehicleStatus === 'ALL'">
+      Start by registering your first vehicle
+    </p>
+  </div>
+
+  <!-- Card View -->
+  <div class="vehicles-grid" *ngIf="!isLoading && viewMode === 'card' && filteredVehicles.length > 0">
+    <div class="vehicle-card" *ngFor="let vehicle of filteredVehicles">
+      <div class="card-header">
+        <div class="vehicle-number">{{ vehicle.registrationNumber }}</div>
+        <div class="badges">
+          <span class="badge" [ngClass]="getApprovalClass(vehicle.approvalStatus)">
+            {{ formatLabel(vehicle.approvalStatus) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="vehicle-info">
+          <div class="info-row">
+            <span class="label">Make & Model:</span>
+            <span class="value">{{ vehicle.make }} {{ vehicle.model }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Owner:</span>
+            <span class="value">{{ vehicle.ownerName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Type:</span>
+            <span class="value">{{ formatLabel(vehicle.vehicleType) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Color:</span>
+            <span class="value">{{ vehicle.color }}</span>
+          </div>
+          <div class="info-row" *ngIf="vehicle.unitNumber">
+            <span class="label">Unit:</span>
+            <span class="value">{{ vehicle.unitNumber }}</span>
+          </div>
+          <div class="info-row" *ngIf="vehicle.parkingSlot">
+            <span class="label">Parking:</span>
+            <span class="value">{{ vehicle.parkingSlot }}</span>
+          </div>
+        </div>
+
+        <div class="integration-status">
+          <div class="status-item" *ngIf="vehicle.rfidTag">
+            <span class="icon">🏷️</span>
+            <div class="status-info">
+              <span class="status-label">RFID</span>
+              <span class="status-badge" [ngClass]="getRFIDStatusClass(vehicle.rfidTag.status)">
+                {{ formatLabel(vehicle.rfidTag.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="status-item" *ngIf="vehicle.fasTag">
+            <span class="icon">💳</span>
+            <div class="status-info">
+              <span class="status-label">FASTag</span>
+              <span class="status-badge" [ngClass]="getFASTagStatusClass(vehicle.fasTag.status)">
+                {{ formatLabel(vehicle.fasTag.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="date">Registered: {{ formatDate(vehicle.registrationDate) }}</span>
+        <button class="btn btn-sm btn-details" (click)="viewDetails(vehicle)">
+          View Details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="vehicles-table-container" *ngIf="!isLoading && viewMode === 'table' && filteredVehicles.length > 0">
+    <table class="vehicles-table">
+      <thead>
+        <tr>
+          <th>Registration No.</th>
+          <th>Owner</th>
+          <th>Make & Model</th>
+          <th>Type</th>
+          <th>RFID</th>
+          <th>FASTag</th>
+          <th>Approval</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let vehicle of filteredVehicles">
+          <td><strong>{{ vehicle.registrationNumber }}</strong></td>
+          <td>{{ vehicle.ownerName }}</td>
+          <td>{{ vehicle.make }} {{ vehicle.model }}</td>
+          <td>{{ formatLabel(vehicle.vehicleType) }}</td>
+          <td>
+            <span *ngIf="vehicle.rfidTag" class="table-badge" [ngClass]="getRFIDStatusClass(vehicle.rfidTag.status)">
+              ✓
+            </span>
+            <span *ngIf="!vehicle.rfidTag">-</span>
+          </td>
+          <td>
+            <span *ngIf="vehicle.fasTag" class="table-badge" [ngClass]="getFASTagStatusClass(vehicle.fasTag.status)">
+              ✓
+            </span>
+            <span *ngIf="!vehicle.fasTag">-</span>
+          </td>
+          <td>
+            <span class="table-badge" [ngClass]="getApprovalClass(vehicle.approvalStatus)">
+              {{ formatLabel(vehicle.approvalStatus) }}
+            </span>
+          </td>
+          <td>
+            <span class="table-badge" [ngClass]="getStatusClass(vehicle.status)">
+              {{ formatLabel(vehicle.status) }}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm" (click)="viewDetails(vehicle)">View</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()" *ngIf="selectedVehicle">
+    <div class="modal-header">
+      <h2>Vehicle Details</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Basic Info -->
+      <div class="detail-section">
+        <h3>Basic Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Registration Number:</label>
+            <span class="detail-value highlight">{{ selectedVehicle.registrationNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Vehicle Type:</label>
+            <span class="detail-value">{{ formatLabel(selectedVehicle.vehicleType) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Make:</label>
+            <span class="detail-value">{{ selectedVehicle.make }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Model:</label>
+            <span class="detail-value">{{ selectedVehicle.model }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Color:</label>
+            <span class="detail-value">{{ selectedVehicle.color }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Year:</label>
+            <span class="detail-value">{{ selectedVehicle.year }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Owner Info -->
+      <div class="detail-section">
+        <h3>Owner Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Owner Name:</label>
+            <span class="detail-value">{{ selectedVehicle.ownerName }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Owner ID:</label>
+            <span class="detail-value">{{ selectedVehicle.ownerId }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Owner Type:</label>
+            <span class="detail-value">{{ formatLabel(selectedVehicle.ownerType) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedVehicle.unitNumber">
+            <label>Unit Number:</label>
+            <span class="detail-value">{{ selectedVehicle.unitNumber }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedVehicle.parkingSlot">
+            <label>Parking Slot:</label>
+            <span class="detail-value">{{ selectedVehicle.parkingSlot }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RFID Details -->
+      <div class="detail-section" *ngIf="selectedVehicle.rfidTag">
+        <h3>🏷️ RFID Tag Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Tag Number:</label>
+            <span class="detail-value">{{ selectedVehicle.rfidTag.tagNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Status:</label>
+            <span class="badge" [ngClass]="getRFIDStatusClass(selectedVehicle.rfidTag.status)">
+              {{ formatLabel(selectedVehicle.rfidTag.status) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Issue Date:</label>
+            <span class="detail-value">{{ formatDate(selectedVehicle.rfidTag.issueDate) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedVehicle.rfidTag.expiryDate">
+            <label>Expiry Date:</label>
+            <span class="detail-value">{{ formatDate(selectedVehicle.rfidTag.expiryDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Scan Count:</label>
+            <span class="detail-value">{{ selectedVehicle.rfidTag.scanCount }} times</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedVehicle.rfidTag.lastScanned">
+            <label>Last Scanned:</label>
+            <span class="detail-value">{{ formatDateTime(selectedVehicle.rfidTag.lastScanned) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASTag Details -->
+      <div class="detail-section" *ngIf="selectedVehicle.fasTag">
+        <h3>💳 FASTag Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Tag Number:</label>
+            <span class="detail-value">{{ selectedVehicle.fasTag.tagNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Status:</label>
+            <span class="badge" [ngClass]="getFASTagStatusClass(selectedVehicle.fasTag.status)">
+              {{ formatLabel(selectedVehicle.fasTag.status) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Account ID:</label>
+            <span class="detail-value">{{ selectedVehicle.fasTag.accountId }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Bank:</label>
+            <span class="detail-value">{{ selectedVehicle.fasTag.bankName }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Wallet Balance:</label>
+            <span class="detail-value highlight">₹{{ selectedVehicle.fasTag.walletBalance }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Vehicle Class:</label>
+            <span class="detail-value">{{ selectedVehicle.fasTag.vehicleClass }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Info -->
+      <div class="detail-section">
+        <h3>Status & Approval</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Vehicle Status:</label>
+            <span class="badge" [ngClass]="getStatusClass(selectedVehicle.status)">
+              {{ formatLabel(selectedVehicle.status) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Approval Status:</label>
+            <span class="badge" [ngClass]="getApprovalClass(selectedVehicle.approvalStatus)">
+              {{ formatLabel(selectedVehicle.approvalStatus) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Registration Date:</label>
+            <span class="detail-value">{{ formatDate(selectedVehicle.registrationDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Last Modified:</label>
+            <span class="detail-value">{{ formatDateTime(selectedVehicle.lastModified) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedVehicle.approvedBy">
+            <label>Approved By:</label>
+            <span class="detail-value">{{ selectedVehicle.approvedBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="detail-section" *ngIf="selectedVehicle.remarks">
+        <h3>Remarks</h3>
+        <p class="remarks-text">{{ selectedVehicle.remarks }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button 
+        class="btn btn-danger" 
+        *ngIf="selectedVehicle.approvalStatus === 'PENDING'"
+        (click)="rejectVehicle(selectedVehicle.id!)">
+        Reject
+      </button>
+      <button 
+        class="btn btn-success" 
+        *ngIf="selectedVehicle.approvalStatus === 'PENDING'"
+        (click)="approveVehicle(selectedVehicle.id!)">
+        Approve
+      </button>
+      <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</div>

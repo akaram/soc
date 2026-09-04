@@ -1,0 +1,401 @@
+.staff-detail-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 2rem;
+}
+
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.back-btn,
+.edit-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.back-btn:hover,
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.content {
+  padding: 1rem;
+}
+
+.profile-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.profile-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #f0f0f0;
+  margin-bottom: 1rem;
+}
+
+.profile-card h2 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.35rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.role-badge.maid {
+  background: #fef3c7;
+  color: #92400e;
+}
+.role-badge.cook {
+  background: #fce7f3;
+  color: #831843;
+}
+.role-badge.driver {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.role-badge.nanny {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.role-badge.gardener {
+  background: #d1fae5;
+  color: #065f46;
+}
+.role-badge.caretaker {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.role-badge.tutor {
+  background: #fef3c7;
+  color: #92400e;
+}
+.role-badge.other {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.status-badge.blocked {
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+.status-badge.pending-approval {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rating-section {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.stars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star {
+  font-size: 1.5rem;
+  color: #e5e7eb;
+}
+
+.star.filled {
+  color: #fbbf24;
+}
+
+.rating-text {
+  font-weight: 600;
+  color: #666;
+}
+
+.info-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.passcode-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.card-header {
+  margin-bottom: 1.5rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.passcode-display-large {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.passcode {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  font-family: 'Courier New', monospace;
+}
+
+.regenerate-btn {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+}
+
+.regenerate-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.passcode-note {
+  opacity: 0.9;
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 0;
+}
+
+.info-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 500;
+}
+
+.value {
+  color: #333;
+  font-weight: 500;
+}
+
+.doc-scan {
+  margin-top: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.doc-scan img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  display: block;
+}
+
+.doc-scan a {
+  display: block;
+  padding: 12px;
+  text-align: center;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.doc-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.days-display {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.day-badge {
+  background: #667eea;
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.action-button {
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-button:hover {
+  background: #f9fafb;
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.danger-zone {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.danger-zone h3 {
+  margin: 0 0 1rem 0;
+  color: #ef4444;
+  font-size: 1.1rem;
+}
+
+.danger-button,
+.warning-button {
+  width: 100%;
+  border: 2px solid #ef4444;
+  background: white;
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 0.75rem;
+}
+
+.danger-button:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.warning-button {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.warning-button:hover {
+  background: #10b981;
+  color: white;
+}
+
+.danger-button:last-child {
+  margin-bottom: 0;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,16 @@
+<div class="container" *ngIf="!loading && row">
+  <a routerLink="/mobile/complaints" class="back">Back</a>
+  <h2>{{ row.title }}</h2>
+  <p class="meta">{{ row.complaintNumber }} - {{ row.status }}</p>
+  <p class="meta">{{ row.category }} - {{ row.priority }}</p>
+  <section class="box">
+    <h3>Description</h3>
+    <p>{{ row.description }}</p>
+  </section>
+  <section class="box" *ngIf="row.resolution">
+    <h3>Resolution</h3>
+    <p>{{ row.resolution }}</p>
+  </section>
+</div>
+<div class="container" *ngIf="loading">Loading</div>
+<div class="container err" *ngIf="!loading && !row">Complaint not found.</div>

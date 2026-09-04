@@ -1,0 +1,641 @@
+<div class="user-list-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>👥 Registered Users</h1>
+      <p class="society-context" *ngIf="activeSocietyId">
+        <span class="society-label">Selected society:</span>
+        <strong>{{ activeSocietyName }}</strong>
+        <a class="society-change-link" routerLink="/admin/societies">Change</a>
+      </p>
+      <p class="society-context warn" *ngIf="!activeSocietyId">
+        No society selected —
+        <a routerLink="/admin/societies">open Society Setup</a> and click <em>Select</em>.
+      </p>
+      <p class="total-line">Showing {{ pageRangeStart }}–{{ pageRangeEnd }} of {{ totalCount }} users</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="navigateToAddResident()">
+        ➕ Add Resident
+      </button>
+      <button class="btn btn-primary" (click)="navigateToAddStaff()">
+        👷 Add Staff
+      </button>
+      <button class="btn btn-primary guard-btn" (click)="navigateToAddGuard()">
+        🛡️ Add Guard
+      </button>
+    </div>
+  </div>
+
+  <!-- Flat linking notices (same guidance as in user detail modal) -->
+  <div class="setup-banner warn" *ngIf="societyFlatCount === 0">
+    <strong>No flats in this society.</strong>
+    In <a routerLink="/admin/societies">Society Setup</a>, select your society and create one with
+    <em>Generate flats</em> &gt; 0. Mobile complaints need flats in the database.
+  </div>
+  <div class="setup-banner info" *ngIf="societyFlatCount !== null && societyFlatCount > 0 && usersWithoutFlatLink > 0">
+    <strong>{{ usersWithoutFlatLink }} user(s) not linked to a flat.</strong>
+    Open a user → <em>View</em> → <em>Link to flat</em> (required for mobile complaints — not just a flat number on the profile).
+    <button type="button" class="link-btn" (click)="showUnlinkedUsersOnly()">Show unlinked only</button>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon blue">👥</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.totalUsers }}</span>
+        <span class="stat-label">Total Users</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✓</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.activeUsers }}</span>
+        <span class="stat-label">Active</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">⏳</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.pendingApproval }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">🏠</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.owners }}</span>
+        <span class="stat-label">Owners</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon teal">🔑</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.tenants }}</span>
+        <span class="stat-label">Tenants</span>
+      </div>
+    </div>
+    <div class="stat-card" [class.clickable]="usersWithoutFlatLink > 0" (click)="usersWithoutFlatLink > 0 && showUnlinkedUsersOnly()" [title]="usersWithoutFlatLink > 0 ? 'Show users without a linked flat' : ''">
+      <div class="stat-icon amber">🔗</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ usersWithoutFlatLink }}</span>
+        <span class="stat-label">Need flat link</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">⚠️</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.suspended }}</span>
+        <span class="stat-label">Suspended</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <!-- Direct lookup (cross-society) -->
+    <div class="filter-group" style="margin-bottom: 10px; align-items: center;">
+      <input
+        type="email"
+        [(ngModel)]="lookup.email"
+        placeholder="Find by email (loads user even if not in current society)"
+        class="search-input"
+        style="max-width: 420px;"
+      />
+      <button class="btn btn-secondary" (click)="findByEmail()" [disabled]="lookup.busy || !lookup.email.trim()">
+        Find Email
+      </button>
+
+      <input
+        type="text"
+        [(ngModel)]="lookup.phone"
+        placeholder="Find by phone"
+        class="search-input"
+        style="max-width: 220px;"
+      />
+      <button class="btn btn-secondary" (click)="findByPhone()" [disabled]="lookup.busy || !lookup.phone.trim()">
+        Find Phone
+      </button>
+
+      <span *ngIf="lookup.message" style="color:#64748b; font-size: 0.9rem;">{{ lookup.message }}</span>
+    </div>
+
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="🔍 Search by name, email, phone, flat..."
+        class="search-input">
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filterUserType" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All User Types</option>
+        <option *ngFor="let type of userTypes" [value]="type">{{ formatLabel(type) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterUserRole" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Roles</option>
+        <option value="STAFF">All Staff</option>
+        <option value="GUARD">Security Guards</option>
+        <option *ngFor="let role of userRoles" [value]="role">{{ formatLabel(role) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Status</option>
+        <option *ngFor="let status of userStatuses" [value]="status">{{ formatLabel(status) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterVerification" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Verification</option>
+        <option *ngFor="let status of verificationStatuses" [value]="status">{{ formatLabel(status) }}</option>
+      </select>
+
+      <select [(ngModel)]="filterBuilding" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All Buildings</option>
+        <option *ngFor="let building of buildings" [value]="building">{{ building }}</option>
+      </select>
+
+      <select [(ngModel)]="filterFlatLink" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="ALL">All flat links</option>
+        <option value="UNLINKED">Not linked to flat</option>
+        <option value="LINKED">Linked to flat</option>
+      </select>
+
+      <button class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+    </div>
+
+    <div class="view-toggle">
+      <button 
+        class="view-btn" 
+        [class.active]="viewMode === 'card'"
+        (click)="viewMode = 'card'">
+        📋 Cards
+      </button>
+      <button 
+        class="view-btn" 
+        [class.active]="viewMode === 'table'"
+        (click)="viewMode = 'table'">
+        📊 Table
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && totalCount === 0">
+    <div class="empty-icon">👥</div>
+    <h2>No Users Found</h2>
+    <p *ngIf="searchTerm || filterUserType !== 'ALL' || filterStatus !== 'ALL'">
+      Try adjusting your filters
+    </p>
+    <p *ngIf="!searchTerm && filterUserType === 'ALL' && filterStatus === 'ALL'">
+      Start by registering a new user
+    </p>
+  </div>
+
+  <!-- Card View -->
+  <div class="users-grid" *ngIf="!isLoading && viewMode === 'card' && users.length > 0">
+    <div class="user-card" *ngFor="let user of paginatedUsers" (click)="viewDetails(user)">
+      <div class="card-header">
+        <div class="user-avatar" [class]="getUserTypeClass(user.userType)" [class.has-photo]="hasProfilePhoto(user)">
+          <app-profile-avatar
+            *ngIf="hasProfilePhoto(user); else cardInitials"
+            [photoUrl]="user.profileImage"
+            [name]="getFullName(user)"
+            [role]="user.userRole"
+            size="sm"
+          ></app-profile-avatar>
+          <ng-template #cardInitials>{{ getInitials(user) }}</ng-template>
+        </div>
+        <div class="user-basic">
+          <h3>{{ getFullName(user) }}</h3>
+          <span class="flat-number">{{ user.flatNumber }} • {{ user.building }}</span>
+          <span class="badge small flat-link-badge unlinked" *ngIf="!user.flatId">Not linked</span>
+        </div>
+        <span class="role-badge">{{ getRoleIcon(user.userRole) }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">📧</span>
+          <span class="value">{{ user.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">📱</span>
+          <span class="value">{{ user.phone }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Type:</span>
+          <span class="badge" [ngClass]="getUserTypeClass(user.userType)">{{ formatLabel(user.userType) }}</span>
+        </div>
+        
+        <div class="access-icons">
+          <span class="access-icon" [class.active]="user.rfidTagAssigned" title="RFID">🏷️</span>
+          <span class="access-icon" [class.active]="user.facialRecognitionSetup" title="Face ID">👤</span>
+          <span class="access-icon" [class.active]="user.emailVerified" title="Email Verified">✉️</span>
+          <span class="access-icon" [class.active]="user.phoneVerified" title="Phone Verified">📱</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="badge" [ngClass]="getStatusClass(user.status)">{{ formatLabel(user.status) }}</span>
+        <span class="badge" [ngClass]="getVerificationClass(user.verificationStatus)">{{ formatLabel(user.verificationStatus) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="users-table-container" *ngIf="!isLoading && viewMode === 'table' && users.length > 0">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Contact</th>
+          <th>Flat / Building</th>
+          <th>Type</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Verification</th>
+          <th>Access</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of paginatedUsers">
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar small" [class]="getUserTypeClass(user.userType)">
+                <app-profile-avatar
+                  *ngIf="hasProfilePhoto(user); else tableInitials"
+                  [photoUrl]="user.profileImage"
+                  [name]="getFullName(user)"
+                  [role]="user.userRole"
+                  size="sm"
+                ></app-profile-avatar>
+                <ng-template #tableInitials>{{ getInitials(user) }}</ng-template>
+              </div>
+              <div class="user-info">
+                <strong>{{ getFullName(user) }}</strong>
+                <small>{{ user.id }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="contact-cell">
+              <span>{{ user.email }}</span>
+              <span>{{ user.phone }}</span>
+            </div>
+          </td>
+          <td>
+            <strong>{{ user.flatNumber || '—' }}</strong>
+            <br>
+            <small>{{ user.building }}</small>
+            <br>
+            <span class="badge small flat-link-badge unlinked" *ngIf="!user.flatId">Not linked</span>
+            <span class="badge small flat-link-badge linked" *ngIf="user.flatId">Linked</span>
+          </td>
+          <td>
+            <span class="badge small" [ngClass]="getUserTypeClass(user.userType)">
+              {{ formatLabel(user.userType) }}
+            </span>
+          </td>
+          <td>{{ getRoleIcon(user.userRole) }} {{ formatLabel(user.userRole) }}</td>
+          <td>
+            <span class="badge small" [ngClass]="getStatusClass(user.status)">
+              {{ formatLabel(user.status) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge small" [ngClass]="getVerificationClass(user.verificationStatus)">
+              {{ formatLabel(user.verificationStatus) }}
+            </span>
+          </td>
+          <td>
+            <div class="access-cell">
+              <span [class.active]="user.rfidTagAssigned" title="RFID">🏷️</span>
+              <span [class.active]="user.facialRecognitionSetup" title="Face ID">👤</span>
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-sm" (click)="viewDetails(user)">View</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination (server-side) -->
+  <div class="pagination" *ngIf="!isLoading && totalCount > 0">
+    <div class="pagination-left">
+      <label class="page-size-label">
+        Rows per page
+        <select class="page-size-select" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+          <option *ngFor="let n of pageSizeOptions" [ngValue]="n">{{ n }}</option>
+        </select>
+      </label>
+      <span class="page-info">{{ pageRangeStart }}–{{ pageRangeEnd }} of {{ totalCount }}</span>
+    </div>
+    <div class="pagination-right">
+    <button 
+      class="page-btn" 
+      (click)="changePage(currentPage - 1)" 
+      [disabled]="currentPage === 1">
+      ← Prev
+    </button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button 
+      class="page-btn" 
+      (click)="changePage(currentPage + 1)" 
+      [disabled]="currentPage === totalPages">
+      Next →
+    </button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()" *ngIf="selectedUser">
+    <div class="modal-header">
+        <div class="modal-title">
+          <div class="user-avatar large" [class]="getUserTypeClass(selectedUser.userType)">
+            <app-profile-avatar
+              [photoUrl]="selectedUser.profileImage"
+              [name]="getFullName(selectedUser)"
+              [role]="selectedUser.userRole"
+              size="md"
+              [editable]="isGuardRole(selectedUser)"
+              [preferCamera]="isGuardRole(selectedUser)"
+              fallbackGradient="linear-gradient(135deg, #475569 0%, #334155 100%)"
+              (photoChange)="onAdminProfilePhotoChange($event)"
+              (uploadError)="onPhotoUploadError($event)"
+            ></app-profile-avatar>
+          </div>
+        <div>
+          <h2>{{ getFullName(selectedUser) }}</h2>
+          <span class="user-subtitle">
+            {{ formatLabel(selectedUser.userRole) }}
+            <span *ngIf="selectedUser.flatNumber"> · {{ selectedUser.flatNumber }}</span>
+          </span>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Basic Info -->
+      <div class="detail-section">
+        <h3>Basic Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Email:</label>
+            <span class="detail-value">{{ selectedUser.email }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Phone:</label>
+            <span class="detail-value">{{ selectedUser.phone }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.alternatePhone">
+            <label>Alternate Phone:</label>
+            <span class="detail-value">{{ selectedUser.alternatePhone }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.dateOfBirth">
+            <label>Date of Birth:</label>
+            <span class="detail-value">{{ formatDate(selectedUser.dateOfBirth) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Gender:</label>
+            <span class="detail-value">{{ formatLabel(selectedUser.gender) }}</span>
+          </div>
+          <div class="detail-item reference-id">
+            <label>User ID:</label>
+            <span class="detail-value mono">{{ selectedUser.id }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address Info -->
+      <div class="detail-section">
+        <h3>Address Details</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Flat Number:</label>
+            <span class="detail-value highlight">{{ selectedUser.flatNumber || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Building:</label>
+            <span class="detail-value">{{ selectedUser.building || '—' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.floor">
+            <label>Floor:</label>
+            <span class="detail-value">{{ selectedUser.floor }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Society:</label>
+            <span class="detail-value">{{ selectedUser.society || userService.getSocietyDisplayName(selectedUser.societyId, selectedUser.society) }}</span>
+          </div>
+          <div class="detail-item reference-id" *ngIf="selectedUser.flatId">
+            <label>Flat ID (linked):</label>
+            <span class="detail-value mono">{{ selectedUser.flatId }}</span>
+          </div>
+        </div>
+
+        <!-- Link user to a database flat (required for mobile complaints) -->
+        <div class="flat-link-box">
+          <h4>Link to flat</h4>
+          <p class="flat-link-hint">Mobile complaints need a flat linked in the database — not just a flat number on the profile.</p>
+          <p class="flat-link-loading" *ngIf="flatLink.loading">Loading flats…</p>
+          <p class="flat-link-error" *ngIf="flatLink.error">{{ flatLink.error }}</p>
+          <div class="flat-link-row" *ngIf="!flatLink.loading && flatLink.flats.length">
+            <select class="flat-select" [(ngModel)]="flatLink.selectedFlatId">
+              <option value="">— Select flat —</option>
+              <option *ngFor="let f of flatLink.flats" [value]="f.id">
+                {{ f.flatNumber }}<span *ngIf="f.floorNumber"> (floor {{ f.floorNumber }})</span>
+              </option>
+            </select>
+            <button
+              class="btn btn-primary btn-sm"
+              type="button"
+              (click)="linkFlatToUser()"
+              [disabled]="!flatLink.selectedFlatId || flatLink.saving">
+              {{ flatLink.saving ? 'Linking…' : 'Link flat' }}
+            </button>
+          </div>
+          <p class="flat-link-ok" *ngIf="flatLink.message">{{ flatLink.message }}</p>
+        </div>
+      </div>
+
+      <!-- User Classification -->
+      <div class="detail-section">
+        <h3>Classification & Status</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>User Type:</label>
+            <span class="badge" [ngClass]="getUserTypeClass(selectedUser.userType)">
+              {{ formatLabel(selectedUser.userType) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Role:</label>
+            <span class="detail-value">{{ getRoleIcon(selectedUser.userRole) }} {{ formatLabel(selectedUser.userRole) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Status:</label>
+            <span class="badge" [ngClass]="getStatusClass(selectedUser.status)">
+              {{ formatLabel(selectedUser.status) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Verification:</label>
+            <span class="badge" [ngClass]="getVerificationClass(selectedUser.verificationStatus)">
+              {{ formatLabel(selectedUser.verificationStatus) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access & Verification -->
+      <div class="detail-section">
+        <h3>Access & Verification</h3>
+        <div class="verification-grid">
+          <div class="verification-item" [class.verified]="selectedUser.emailVerified">
+            <span class="icon">✉️</span>
+            <span>Email {{ selectedUser.emailVerified ? 'Verified' : 'Not Verified' }}</span>
+          </div>
+          <div class="verification-item" [class.verified]="selectedUser.phoneVerified">
+            <span class="icon">📱</span>
+            <span>Phone {{ selectedUser.phoneVerified ? 'Verified' : 'Not Verified' }}</span>
+          </div>
+          <div class="verification-item" [class.verified]="selectedUser.documentsVerified">
+            <span class="icon">📄</span>
+            <span>Documents {{ selectedUser.documentsVerified ? 'Verified' : 'Not Verified' }}</span>
+          </div>
+          <div class="verification-item" [class.verified]="selectedUser.rfidTagAssigned">
+            <span class="icon">🏷️</span>
+            <span>RFID {{ selectedUser.rfidTagAssigned ? 'Assigned' : 'Not Assigned' }}</span>
+          </div>
+          <div class="verification-item" [class.verified]="selectedUser.facialRecognitionSetup">
+            <span class="icon">👤</span>
+            <span>Face ID {{ selectedUser.facialRecognitionSetup ? 'Setup' : 'Not Setup' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Family Members -->
+      <div class="detail-section" *ngIf="selectedUser.familyMembers && selectedUser.familyMembers.length > 0">
+        <h3>Family Members ({{ selectedUser.familyMembers.length }})</h3>
+        <div class="family-list">
+          <div class="family-member" *ngFor="let member of selectedUser.familyMembers">
+            <span class="member-name">{{ member.name }}</span>
+            <span class="member-relation">{{ member.relation }}</span>
+            <span class="member-phone" *ngIf="member.phone">{{ member.phone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="detail-section" *ngIf="selectedUser.emergencyContact">
+        <h3>Emergency Contact</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Name:</label>
+            <span class="detail-value">{{ selectedUser.emergencyContact.name }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Relation:</label>
+            <span class="detail-value">{{ selectedUser.emergencyContact.relation }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Phone:</label>
+            <span class="detail-value">{{ selectedUser.emergencyContact.phone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Counts -->
+      <div class="detail-section">
+        <h3>Registered Assets</h3>
+        <div class="assets-grid">
+          <div class="asset-card">
+            <span class="asset-icon">🚗</span>
+            <span class="asset-count">{{ selectedUser.vehicleCount }}</span>
+            <span class="asset-label">Vehicles</span>
+          </div>
+          <div class="asset-card">
+            <span class="asset-icon">🐾</span>
+            <span class="asset-count">{{ selectedUser.petCount }}</span>
+            <span class="asset-label">Pets</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timestamps -->
+      <div class="detail-section">
+        <h3>Activity</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Registered:</label>
+            <span class="detail-value">{{ formatDate(selectedUser.registrationDate) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.lastLogin">
+            <label>Last Login:</label>
+            <span class="detail-value">{{ formatDateTime(selectedUser.lastLogin) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Last Modified:</label>
+            <span class="detail-value">{{ formatDateTime(selectedUser.lastModified) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.approvedBy">
+            <label>Approved By:</label>
+            <span class="detail-value">{{ selectedUser.approvedBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="detail-section" *ngIf="selectedUser.remarks">
+        <h3>Remarks</h3>
+        <p class="remarks-text">{{ selectedUser.remarks }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <!-- Pending Actions -->
+      <ng-container *ngIf="selectedUser.verificationStatus === 'PENDING' || selectedUser.verificationStatus === 'UNDER_REVIEW'">
+        <button class="btn btn-danger" (click)="rejectUser(selectedUser.id)">
+          ✗ Reject
+        </button>
+        <button class="btn btn-success" (click)="approveUser(selectedUser.id)">
+          ✓ Approve
+        </button>
+      </ng-container>
+      
+      <!-- Status Actions -->
+      <button 
+        class="btn btn-warning" 
+        *ngIf="selectedUser.status === 'ACTIVE'"
+        (click)="suspendUser(selectedUser.id)">
+        ⚠️ Suspend
+      </button>
+      <button 
+        class="btn btn-success" 
+        *ngIf="selectedUser.status === 'SUSPENDED'"
+        (click)="activateUser(selectedUser.id)">
+        ✓ Activate
+      </button>
+      
+      <button class="btn btn-danger-outline" (click)="deleteUser(selectedUser.id)">
+        🗑️ Delete
+      </button>
+      <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</div>

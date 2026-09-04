@@ -1,0 +1,446 @@
+<div class="facial-container">
+  <!-- Header -->
+  <div class="facial-header">
+    <button class="back-button" (click)="skipSetup()">
+      <span class="back-icon">←</span>
+    </button>
+    <h1>Facial Recognition Setup</h1>
+    <button class="skip-button" (click)="skipSetup()">Skip</button>
+  </div>
+
+  <!-- Progress Bar (for capture step) -->
+  <div class="progress-bar" *ngIf="currentStep === 'capture'">
+    <div class="progress-fill" [style.width.%]="getProgress()"></div>
+    <span class="progress-text">{{ capturedPhotos.length }} / {{ requiredAngles.length }} Photos</span>
+  </div>
+
+  <!-- Content -->
+  <div class="facial-content">
+    
+    <!-- Alert Messages -->
+    <div class="alert alert-success" *ngIf="successMessage">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <span class="alert-icon">✕</span>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Step 1: Introduction -->
+    <div class="step-content intro-step" *ngIf="currentStep === 'intro'">
+      <div class="intro-icon">🔐</div>
+      <h2>Secure Your Account with Facial Recognition</h2>
+      <p class="intro-subtitle">Set up face unlock for quick and secure access</p>
+
+      <div class="benefits-list">
+        <div class="benefit-item">
+          <span class="benefit-icon">⚡</span>
+          <div class="benefit-text">
+            <h3>Quick Access</h3>
+            <p>Login in seconds without typing passwords</p>
+          </div>
+        </div>
+
+        <div class="benefit-item">
+          <span class="benefit-icon">🛡️</span>
+          <div class="benefit-text">
+            <h3>Enhanced Security</h3>
+            <p>Biometric authentication for maximum protection</p>
+          </div>
+        </div>
+
+        <div class="benefit-item">
+          <span class="benefit-icon">👤</span>
+          <div class="benefit-text">
+            <h3>Personalized Experience</h3>
+            <p>Your face is your unique identifier</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        <p><strong>🔒 Your Privacy Matters</strong></p>
+        <p>Your facial data is encrypted and stored securely. We never share your biometric information with third parties.</p>
+      </div>
+
+      <!-- Login Requirement Notice (for Admin users enrolling themselves) -->
+      <div class="login-notice" *ngIf="!targetUserId && !isUserLoggedIn()">
+        <div class="notice-icon">⚠️</div>
+        <div class="notice-content">
+          <p><strong>Login Required</strong></p>
+          <p>You need to be logged in to enroll facial recognition. Please log in first, then return to this page.</p>
+          <button class="btn btn-secondary" (click)="goToLogin()">
+            Go to Login
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Enrolling for Another User Notice -->
+      <div class="login-notice admin-enroll-notice" *ngIf="targetUserId">
+        <div class="notice-icon">👤</div>
+        <div class="notice-content">
+          <p><strong>Enrolling for User</strong></p>
+          <p>You are enrolling facial recognition for another user. The face data will be linked to the specified user account.</p>
+        </div>
+      </div>
+
+      <!-- User Selection Dropdown (ONLY for Admin Users) -->
+      <div class="user-selection" *ngIf="isAdminMode && !targetUserId">
+        <label class="user-selection-label">
+          <i class="material-icons">person</i>
+          Select User to Enroll
+          <span class="admin-badge">Admin Only</span>
+        </label>
+        
+        <!-- Debug Info (remove in production) -->
+        <div class="debug-info" *ngIf="!production">
+          <small>
+            Society: {{ activeSocietyId || 'none' }} ·
+            users={{ users.length }} ·
+            loading={{ isLoadingUsers }}
+          </small>
+          <button type="button" class="btn-refresh" (click)="loadUsers()" [disabled]="isLoadingUsers">
+            <i class="material-icons">refresh</i> Reload Users
+          </button>
+        </div>
+        
+        <div class="user-dropdown-wrapper">
+          <select 
+            class="user-dropdown"
+            [(ngModel)]="selectedUserId"
+            (change)="onUserSelectionChange()"
+            [disabled]="isLoadingUsers">
+            <option value="">-- Select a User --</option>
+            <option *ngFor="let user of users" [value]="user.id">
+              {{ user.firstName }} {{ user.lastName }} 
+              ({{ user.email }}) 
+              - {{ user.flatNumber || 'N/A' }}
+              [ID: {{ user.id }}]
+            </option>
+          </select>
+          <div class="loading-spinner" *ngIf="isLoadingUsers">
+            <i class="material-icons">refresh</i> Loading users...
+          </div>
+        </div>
+        <small class="user-selection-hint" *ngIf="!isLoadingUsers && users.length > 0">
+          Select the user for whom you want to enroll facial recognition
+        </small>
+        <small class="user-selection-error" *ngIf="errorMessage && !isLoadingUsers">
+          {{ errorMessage }}
+        </small>
+        <small class="user-selection-info" *ngIf="!isLoadingUsers && users.length === 0 && !errorMessage">
+          No eligible users found. Users must be ACTIVE or have PENDING/UNDER_REVIEW verification status.
+        </small>
+      </div>
+
+      <button class="btn btn-primary" 
+              (click)="startSetup()"
+              [disabled]="(isAdminMode && !selectedUserId && !targetUserId) || (!isAdminMode && !isUserLoggedIn())">
+        Get Started
+      </button>
+    </div>
+
+    <!-- Step 2: Camera Permission -->
+    <div class="step-content permission-step" *ngIf="currentStep === 'permission'">
+      <div class="permission-icon">📷</div>
+      <h2>Camera Access Required</h2>
+      <p>We need access to your camera to capture your face for recognition</p>
+
+      <div class="permission-info">
+        <div class="info-item">
+          <span class="info-icon">✓</span>
+          <p>Camera is only used during setup</p>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">✓</span>
+          <p>Photos are processed securely</p>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">✓</span>
+          <p>Allow camera when the browser asks</p>
+        </div>
+      </div>
+
+      <div class="loading-spinner" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Requesting camera access...</p>
+      </div>
+
+      <div class="permission-actions" *ngIf="!isLoading">
+        <button type="button" class="btn-primary" (click)="retryCamera()">
+          <i class="material-icons">videocam</i>
+          {{ errorMessage ? 'Retry camera' : 'Allow camera' }}
+        </button>
+        <p class="permission-hint" *ngIf="errorMessage">
+          Tip: click the lock / camera icon in the address bar → set Camera to Allow → Retry.
+          Use <strong>http://localhost:4200</strong> (not a LAN IP) if permission keeps failing.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 3: Capture Photos -->
+    <div class="step-content capture-step" *ngIf="currentStep === 'capture'">
+      <!-- Camera View -->
+      <div class="camera-container">
+        <video #videoElement autoplay playsinline muted class="video-stream"></video>
+        <canvas #canvasElement style="display: none;"></canvas>
+        
+        <!-- Camera Overlay -->
+        <div class="camera-overlay">
+          <div class="face-guide">
+            <div class="guide-circle"></div>
+          </div>
+
+          <!-- Current instruction -->
+          <div class="instruction-badge">
+            <span class="instruction-icon">{{ getCurrentAngleIcon() }}</span>
+            <p>{{ getCurrentAngleInstruction() }}</p>
+          </div>
+
+          <!-- Countdown -->
+          <div class="countdown-overlay" *ngIf="isCapturing && captureCountdown > 0">
+            <div class="countdown-number">{{ captureCountdown }}</div>
+          </div>
+        </div>
+
+        <!-- Camera not active message -->
+        <div class="camera-inactive" *ngIf="!cameraActive">
+          <div class="inactive-icon">📷</div>
+          <p>Activating camera...</p>
+        </div>
+      </div>
+
+      <!-- Angle Indicators -->
+      <div class="angle-indicators">
+        <div class="angle-item" 
+             *ngFor="let angleObj of requiredAngles"
+             [class.captured]="isAngleCaptured(angleObj.angle)"
+             [class.current]="currentAngle === angleObj.angle">
+          <div class="angle-icon">
+            <span *ngIf="!isAngleCaptured(angleObj.angle)">{{ angleObj.icon }}</span>
+            <span *ngIf="isAngleCaptured(angleObj.angle)">✓</span>
+          </div>
+          <span class="angle-label">{{ angleObj.label }}</span>
+        </div>
+      </div>
+
+      <!-- Capture Button -->
+      <button 
+        class="capture-button"
+        (click)="capturePhoto()"
+        [disabled]="isCapturing || !cameraActive">
+        <span *ngIf="!isCapturing">
+          <span class="capture-icon">📸</span>
+          Capture Photo
+        </span>
+        <span *ngIf="isCapturing">
+          <span class="spinner-small"></span>
+          Capturing...
+        </span>
+      </button>
+
+      <!-- Tips -->
+      <div class="tips-section">
+        <h4>📌 Tips for Best Results:</h4>
+        <ul>
+          <li>Ensure good lighting on your face</li>
+          <li>Remove glasses and hats</li>
+          <li>Keep your face centered in the circle</li>
+          <li>Stay still when capturing</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Step 4: Review Photos -->
+    <div class="step-content review-step" *ngIf="currentStep === 'review'">
+      <div class="review-header">
+        <h2>Review Your Photos</h2>
+        <p>Check if all photos are clear before proceeding</p>
+      </div>
+
+      <div class="photos-grid">
+        <div class="photo-card" *ngFor="let angleObj of requiredAngles">
+          <div class="photo-wrapper" *ngIf="getPhotoForAngle(angleObj.angle) as photo">
+            <img [src]="photo.photoData" [alt]="angleObj.label">
+            <div class="photo-overlay">
+              <span class="photo-label">{{ angleObj.label }}</span>
+              <span class="photo-quality" 
+                    [class.good]="photo.quality >= 85"
+                    [class.fair]="photo.quality >= 75 && photo.quality < 85">
+                Quality: {{ photo.quality.toFixed(0) }}%
+              </span>
+            </div>
+            <button class="retake-button" (click)="recapturePhoto(angleObj.angle)">
+              🔄 Retake
+            </button>
+          </div>
+          <div class="photo-placeholder" *ngIf="!getPhotoForAngle(angleObj.angle)">
+            <span class="placeholder-icon">{{ angleObj.icon }}</span>
+            <p>{{ angleObj.label }}</p>
+            <button class="btn-small" (click)="recapturePhoto(angleObj.angle)">
+              Capture
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-actions">
+        <button class="btn btn-secondary" (click)="restartSetup()">
+          🔄 Retake All
+        </button>
+        <button class="btn btn-primary" (click)="proceedToVerification()">
+          Continue to Verification
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 5: Verification -->
+    <div class="step-content verify-step" *ngIf="currentStep === 'verify'">
+      <div class="verify-container">
+        <!-- Verifying -->
+        <div class="verifying-state" *ngIf="isVerifying">
+          <div class="verification-animation">
+            <div class="scan-line"></div>
+            <div class="face-outline">
+              <div class="scan-effect"></div>
+            </div>
+          </div>
+          <h2>Verifying Your Face...</h2>
+          <p>Analyzing photos and checking quality</p>
+          <div class="verification-steps">
+            <div class="verify-item">
+              <span class="spinner-small"></span>
+              <span>Face detection</span>
+            </div>
+            <div class="verify-item">
+              <span class="spinner-small"></span>
+              <span>Quality analysis</span>
+            </div>
+            <div class="verify-item">
+              <span class="spinner-small"></span>
+              <span>Liveness check</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Results -->
+        <div class="verification-results" *ngIf="!isVerifying && verificationResult">
+          <div class="result-icon" 
+               [class.success]="verificationResult.success"
+               [class.failed]="!verificationResult.success">
+            <span *ngIf="verificationResult.success">✅</span>
+            <span *ngIf="!verificationResult.success">❌</span>
+          </div>
+
+          <h2 *ngIf="verificationResult.success">Verification Successful!</h2>
+          <h2 *ngIf="!verificationResult.success">Verification Failed</h2>
+          <p>{{ verificationResult.message }}</p>
+
+          <!-- Success Details -->
+          <div class="verification-details" *ngIf="verificationResult.success">
+            <div class="detail-card">
+              <span class="detail-label">Confidence Score</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" [style.width.%]="verificationResult.confidence"></div>
+              </div>
+              <span class="detail-value">{{ verificationResult.confidence.toFixed(1) }}%</span>
+            </div>
+
+            <div class="detail-card">
+              <span class="detail-label">Face Quality</span>
+              <span class="detail-value quality" 
+                    [class.excellent]="verificationResult.faceQuality === 'excellent'"
+                    [class.good]="verificationResult.faceQuality === 'good'">
+                {{ verificationResult.faceQuality | titlecase }}
+              </span>
+            </div>
+
+            <div class="detail-card">
+              <span class="detail-label">Liveness Detection</span>
+              <span class="detail-value" 
+                    [class.success]="verificationResult.livenessDetected">
+                {{ verificationResult.livenessDetected ? 'Passed ✓' : 'Failed ✗' }}
+              </span>
+            </div>
+
+            <div class="features-grid">
+              <div class="feature-item" 
+                   [class.detected]="verificationResult.faceFeatures.eyesOpen">
+                <span class="feature-icon">👁️</span>
+                <span>Eyes Open</span>
+              </div>
+              <div class="feature-item" 
+                   [class.detected]="verificationResult.faceFeatures.smileDetected">
+                <span class="feature-icon">😊</span>
+                <span>Smile</span>
+              </div>
+              <div class="feature-item detected">
+                <span class="feature-icon">📐</span>
+                <span>Multiple Angles</span>
+              </div>
+              <div class="feature-item" 
+                   [class.detected]="verificationResult.faceFeatures.lighting === 'good'">
+                <span class="feature-icon">💡</span>
+                <span>Good Lighting</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="result-actions">
+            <button class="btn btn-secondary" *ngIf="!verificationResult.success" (click)="restartSetup()">
+              🔄 Try Again
+            </button>
+            <button class="btn btn-primary" *ngIf="verificationResult.success" (click)="completeSetup()">
+              Complete Setup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: Success -->
+    <div class="step-content success-step" *ngIf="currentStep === 'success'">
+      <div class="success-animation">
+        <div class="checkmark-circle">
+          <div class="checkmark"></div>
+        </div>
+      </div>
+
+      <h2>Facial Recognition Activated! 🎉</h2>
+      <p>Your face has been successfully registered</p>
+
+      <div class="success-features">
+        <div class="feature-box">
+          <span class="feature-emoji">⚡</span>
+          <h3>Quick Login</h3>
+          <p>Access your account in seconds</p>
+        </div>
+        <div class="feature-box">
+          <span class="feature-emoji">🔒</span>
+          <h3>Secure Access</h3>
+          <p>Your face is your password</p>
+        </div>
+        <div class="feature-box">
+          <span class="feature-emoji">✨</span>
+          <h3>Seamless Experience</h3>
+          <p>No more remembering passwords</p>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" (click)="completeSetup()">
+        Continue to Dashboard
+      </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="loading-content">
+        <div class="spinner-large"></div>
+        <p>Saving your facial data...</p>
+      </div>
+    </div>
+  </div>
+</div>

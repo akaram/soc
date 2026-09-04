@@ -1,0 +1,26 @@
+.container {
+  padding: 16px;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #667eea;
+  text-decoration: none;
+}
+.meta {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.box {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+.box h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+.err {
+  color: #b91c1c;
+}

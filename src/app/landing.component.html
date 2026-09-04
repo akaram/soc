@@ -1,0 +1,472 @@
+<div class="landing-page">
+
+  <!-- Sticky Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#" (click)="scrollToTop($event)">
+        <app-logo size="md"></app-logo>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#modules" (click)="scrollTo($event, 'modules')">Modules</a>
+        <a href="#security" (click)="scrollTo($event, 'security')">Security</a>
+        <a href="#financials" (click)="scrollTo($event, 'financials')">Financials</a>
+        <a href="#operations" (click)="scrollTo($event, 'operations')">Operations</a>
+        <a href="#platform" (click)="scrollTo($event, 'platform')">Platform</a>
+        <a href="#ai" (click)="scrollTo($event, 'ai')">AI</a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="btn btn-outline" routerLink="/admin/login">Login</a>
+        <a class="btn btn-primary" routerLink="/mobile/auth/login">Sign Up / Schedule a Demo</a>
+      </div>
+
+      <button class="mobile-menu-btn" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+        <i class="material-icons">{{ mobileMenuOpen ? 'close' : 'menu' }}</i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Nav Drawer -->
+  <div class="mobile-nav" [class.open]="mobileMenuOpen" (click)="closeMobileMenu()">
+    <div class="mobile-nav-panel" (click)="$event.stopPropagation()">
+      <a href="#modules" (click)="scrollTo($event, 'modules')">All Modules</a>
+      <a href="#security" (click)="scrollTo($event, 'security')">Security</a>
+      <a href="#financials" (click)="scrollTo($event, 'financials')">Financials</a>
+      <a href="#operations" (click)="scrollTo($event, 'operations')">Operations</a>
+      <a href="#platform" (click)="scrollTo($event, 'platform')">Platform</a>
+      <a href="#ai" (click)="scrollTo($event, 'ai')">AI Features</a>
+      <div class="mobile-nav-actions">
+        <a class="btn btn-outline" routerLink="/admin/login" (click)="closeMobileMenu()">Login</a>
+        <a class="btn btn-primary" routerLink="/mobile/auth/login" (click)="closeMobileMenu()">Sign Up / Schedule a Demo</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="material-icons">verified</i>
+          v2.0 &middot; 18 Modules &middot; 300+ Features
+        </div>
+        <h1>The Complete Operating System for Modern Societies.</h1>
+        <p class="hero-sub">
+          From gate security and automated billing to AI-powered operations—manage your entire
+          residential ecosystem from a single, unified dashboard. Built by <strong>SGC Technologies LLP</strong>
+          for Indian housing societies, gated communities, and enterprise property managers.
+        </p>
+
+        <form class="hero-cta-form" (ngSubmit)="onHeroSubmit()">
+          <input
+            type="email"
+            placeholder="Enter your work email"
+            [(ngModel)]="heroEmail"
+            name="heroEmail"
+            required
+            aria-label="Work email" />
+          <button type="submit" class="btn btn-primary">Get Started Free</button>
+        </form>
+        <p class="hero-note">
+          <i class="material-icons">check_circle</i>
+          No credit card required &middot; 14-day free trial &middot; Book a demo anytime
+        </p>
+      </div>
+
+      <!-- Live Admin Portal Preview (same nav as production sidebar) -->
+      <div class="admin-portal-preview" aria-label="Admin portal preview">
+        <div class="preview-sidebar">
+          <div class="preview-sidebar-top">
+            <i class="material-icons">apartment</i>
+            <span>{{ navLabel('nav.navigation') }}</span>
+          </div>
+
+          <div class="preview-nav-section">{{ navLabel('section.main') }}</div>
+          <div class="preview-nav-item">
+            <i class="material-icons">dashboard</i>
+            <span>{{ navLabel('nav.dashboard') }}</span>
+          </div>
+
+          <ng-container *ngFor="let section of adminNavSections">
+            <div class="preview-nav-section">{{ navLabel(section.titleKey) }}</div>
+            <ng-container *ngFor="let item of section.items">
+              <div
+                class="preview-nav-item"
+                [class.active]="item.titleKey === 'nav.gateSecurity'"
+                [class.has-children]="item.children?.length">
+                <i class="material-icons">{{ item.icon }}</i>
+                <span>{{ navLabel(item.titleKey) }}</span>
+                <span class="preview-badge" *ngIf="item.badgeKey">{{ navLabel(item.badgeKey) }}</span>
+                <i class="material-icons expand-hint" *ngIf="item.children?.length">expand_more</i>
+              </div>
+              <div class="preview-nav-item child" *ngFor="let child of item.children">
+                <i class="material-icons">{{ child.icon }}</i>
+                <span>{{ navLabel(child.titleKey) }}</span>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <div class="preview-main">
+          <div class="preview-header">
+            <i class="material-icons">menu_open</i>
+            <div class="preview-header-brand">
+              <app-logo size="sm"></app-logo>
+            </div>
+            <div class="preview-search">
+              <i class="material-icons">search</i>
+              <span>{{ navLabel('header.searchPlaceholder') }}</span>
+            </div>
+            <div class="preview-header-actions">
+              <i class="material-icons">phone_android</i>
+              <i class="material-icons">notifications</i>
+              <i class="material-icons">mail</i>
+            </div>
+          </div>
+
+          <div class="preview-content">
+            <div class="preview-page-header">
+              <h3><i class="material-icons">security</i> {{ navLabel('nav.gateSecurity') }}</h3>
+              <p>Advanced security and access control management system</p>
+            </div>
+
+            <!-- Gate Security hub cards only — no sample stats or vehicle records -->
+            <div class="preview-hub-grid">
+              <div class="preview-hub-card" *ngFor="let feat of gateSecurityFeatures | slice:0:6">
+                <i class="material-icons">{{ feat.icon }}</i>
+                <strong>{{ feat.title }}</strong>
+                <span>{{ feat.description }}</span>
+              </div>
+            </div>
+
+            <p class="preview-hub-note">
+              <i class="material-icons">lock</i>
+              Live data appears after you log in — vehicles, detections, and gate logs are loaded from your society account.
+            </p>
+
+            <a class="preview-cta-link" routerLink="/admin/login">
+              Open full admin portal <i class="material-icons">arrow_forward</i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Stats Bar -->
+  <section class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat-item" *ngFor="let stat of productStats">
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
+        <div class="stat-detail">{{ stat.detail }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust / product authenticity -->
+  <section class="trust-banner">
+    <div class="trust-inner">
+      <p class="trust-text">
+        <i class="material-icons">verified_user</i>
+        Every module listed below is pulled from the <strong>live admin sidebar navigation</strong>—not generic marketing copy.
+      </p>
+      <a class="btn btn-outline trust-cta" routerLink="/admin/login">Explore Admin Portal</a>
+    </div>
+  </section>
+
+  <!-- Admin Navigation Catalog (from shared config) -->
+  <section class="modules-section" id="modules">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>{{ flatNavItems.length }} Admin Modules. One Sidebar.</h2>
+        <p>Filter by the same sections you see after login: Access &amp; Security, Financial, Operations, Facilities, Support &amp; Community, and Advanced.</p>
+      </div>
+
+      <div class="module-section-tabs">
+        <button
+          *ngFor="let section of navSectionFilters"
+          class="module-section-tab"
+          [class.active]="activeModuleSection === section.key"
+          (click)="setModuleSection(section.key)">
+          {{ section.label }}
+        </button>
+      </div>
+
+      <div class="modules-grid">
+        <ng-container *ngFor="let item of filteredNavItems">
+          <a
+            class="module-card"
+            *ngIf="item.route"
+            [routerLink]="item.route"
+            [class.is-child]="item.isChild">
+            <div class="module-card-header">
+              <div class="module-icon">
+                <i class="material-icons">{{ item.icon }}</i>
+              </div>
+              <span class="module-section-badge">{{ item.sectionLabel }}</span>
+            </div>
+            <h3>{{ item.label }}</h3>
+            <p class="module-tagline">{{ moduleDescription(item.titleKey) }}</p>
+            <span class="module-route">{{ item.route }}</span>
+          </a>
+          <div class="module-card module-card-group" *ngIf="!item.route" [class.is-child]="item.isChild">
+            <div class="module-card-header">
+              <div class="module-icon">
+                <i class="material-icons">{{ item.icon }}</i>
+              </div>
+              <span class="module-section-badge">{{ item.sectionLabel }}</span>
+            </div>
+            <h3>{{ item.label }}</h3>
+            <p class="module-tagline">{{ moduleDescription(item.titleKey) }}</p>
+            <span class="module-route">Expandable menu group</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gate Security sub-modules (from gate-security.component.ts) -->
+  <section class="gate-features-section" id="gate-security">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>{{ navLabel('nav.gateSecurity') }} — 11 Sub-Modules</h2>
+        <p>Each card below is a real route inside the admin portal, exactly as configured in Gate Security.</p>
+      </div>
+      <div class="gate-features-grid">
+        <a class="gate-feature-card" *ngFor="let feat of gateSecurityFeatures" [routerLink]="feat.route">
+          <i class="material-icons">{{ feat.icon }}</i>
+          <h3>{{ feat.title }}</h3>
+          <p>{{ feat.description }}</p>
+          <span class="gate-feature-route">{{ feat.route }}</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Pillars -->
+  <section class="features-section" id="features">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>Three Pillars. Zero Compromise.</h2>
+        <p>We grouped 300+ features into three benefit-focused pillars so you see value—not a feature dump.</p>
+      </div>
+
+      <div class="pillar-tabs">
+        <button
+          *ngFor="let pillar of pillars; let i = index"
+          class="pillar-tab"
+          [class.active]="activePillar === i"
+          (click)="setActivePillar(i)">
+          <i class="material-icons">{{ pillar.icon }}</i>
+          {{ pillar.title }}
+        </button>
+      </div>
+
+      <div class="pillar-content" [attr.id]="pillars[activePillar].anchor">
+        <div class="pillar-info">
+          <div class="pillar-meta">
+            <span class="pillar-module-count">{{ pillars[activePillar].moduleCount }}</span>
+          </div>
+          <h3>{{ pillars[activePillar].title }}</h3>
+          <p class="pillar-value">{{ pillars[activePillar].valueCopy }}</p>
+          <div class="feature-grid">
+            <div class="feature-item" *ngFor="let feature of pillars[activePillar].features">
+              <div class="feature-icon">
+                <i class="material-icons">{{ feature.icon }}</i>
+              </div>
+              <div>
+                <h4>{{ feature.title }}</h4>
+                <p>{{ feature.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pillar-visual">
+          <div class="visual-card" *ngFor="let highlight of pillars[activePillar].highlights">
+            <i class="material-icons">{{ highlight.icon }}</i>
+            <div class="visual-card-text">
+              <strong>{{ highlight.title }}</strong>
+              <span>{{ highlight.subtitle }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Unique Differentiators -->
+  <section class="diff-section" id="differentiators">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>What Sets Society App Apart</h2>
+        <p>Not generic property software—these capabilities are built into the product, not promised on a roadmap.</p>
+      </div>
+      <div class="diff-grid">
+        <div class="diff-card" *ngFor="let diff of differentiators">
+          <div class="diff-icon">
+            <i class="material-icons">{{ diff.icon }}</i>
+          </div>
+          <h3>{{ diff.title }}</h3>
+          <p>{{ diff.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin + Mobile Platform -->
+  <section class="platform-section" id="platform">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>Two Interfaces. Every Stakeholder Covered.</h2>
+        <p>A professional admin portal for management teams and a role-tailored mobile app for residents, guards, and committee members.</p>
+      </div>
+      <div class="platform-grid">
+        <div class="platform-card" *ngFor="let platform of platforms">
+          <div class="platform-icon">
+            <i class="material-icons">{{ platform.icon }}</i>
+          </div>
+          <h3>{{ platform.title }}</h3>
+          <p class="platform-subtitle">{{ platform.subtitle }}</p>
+          <ul class="platform-capabilities">
+            <li *ngFor="let cap of platform.capabilities">
+              <i class="material-icons">arrow_forward</i>
+              {{ cap }}
+            </li>
+          </ul>
+          <a
+            class="btn"
+            [class.btn-primary]="platform.icon === 'desktop_windows'"
+            [class.btn-outline]="platform.icon === 'phone_android'"
+            [routerLink]="platform.route">
+            {{ platform.ctaLabel }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Mobile roles strip -->
+      <div class="roles-strip">
+        <span class="roles-label">11 Mobile User Roles:</span>
+        <span class="role-chip">Super Admin</span>
+        <span class="role-chip">Society Admin</span>
+        <span class="role-chip">Guard</span>
+        <span class="role-chip">Security Staff</span>
+        <span class="role-chip">Facility Manager</span>
+        <span class="role-chip">Accountant</span>
+        <span class="role-chip">Committee Member</span>
+        <span class="role-chip">Owner</span>
+        <span class="role-chip">Tenant</span>
+        <span class="role-chip">Domestic Staff</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Spotlight -->
+  <section class="ai-spotlight" id="ai">
+    <div class="ai-inner">
+      <div class="ai-header">
+        <span class="ai-label">Advanced</span>
+        <h2>Powered by Next-Gen Intelligence.</h2>
+        <p>Go beyond basic management with AI-driven insights built for enterprise property managers overseeing multiple societies.</p>
+      </div>
+
+      <div class="ai-cards">
+        <div class="ai-card" *ngFor="let ai of aiFeatures">
+          <div class="ai-card-icon">
+            <i class="material-icons">{{ ai.icon }}</i>
+          </div>
+          <h3>{{ ai.title }}</h3>
+          <p class="ai-card-desc">{{ ai.description }}</p>
+          <ul class="ai-bullets">
+            <li *ngFor="let bullet of ai.bullets">
+              <i class="material-icons">bolt</i>
+              {{ bullet }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta" id="cta">
+    <div class="final-cta-inner">
+      <h2>Ready to transform your community management?</h2>
+      <p class="final-cta-sub">
+        Join the thousands of societies saving up to 40 hours a week on manual operations—with
+        18 modules, 300+ features, and Indian compliance built in from day one.
+      </p>
+
+      <div class="cta-buttons">
+        <a class="btn btn-primary btn-lg btn-cta-alt" routerLink="/mobile/auth/register">Sign Up Now</a>
+        <a class="btn btn-outline btn-lg" href="mailto:sales@sgctechnologies.com">Contact Sales</a>
+      </div>
+
+      <div class="cta-contact">
+        <a class="cta-contact-item" href="mailto:sales@sgctechnologies.com">
+          <i class="material-icons" aria-hidden="true">email</i>
+          <span>sales&#64;sgctechnologies.com</span>
+        </a>
+        <span class="cta-contact-divider" aria-hidden="true">&middot;</span>
+        <a class="cta-contact-item" href="mailto:infor@sgctechnologies.com">
+          <i class="material-icons" aria-hidden="true">support_agent</i>
+          <span>infor&#64;sgctechnologies.com</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="#" (click)="scrollToTop($event)">
+            <app-logo size="md" [onDark]="true"></app-logo>
+          </a>
+          <p>The complete operating system for modern residential communities and property managers. A product of SGC Technologies LLP.</p>
+          <div class="footer-version">Version 2.0.0 &middot; Angular 17 &middot; 229 UI Screens</div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#modules" (click)="scrollTo($event, 'modules')">All 18 Modules</a></li>
+            <li><a href="#security" (click)="scrollTo($event, 'security')">Security</a></li>
+            <li><a href="#financials" (click)="scrollTo($event, 'financials')">Financials</a></li>
+            <li><a href="#platform" (click)="scrollTo($event, 'platform')">Admin &amp; Mobile</a></li>
+            <li><a href="#ai" (click)="scrollTo($event, 'ai')">AI Features</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About SGC Technologies LLP</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="mailto:infor@sgctechnologies.com">Contact</a></li>
+            <li><a href="mailto:sales@sgctechnologies.com">Sales Enquiries</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">SLA</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">
+          &copy; 2026 Society App. A Product of SGC Technologies LLP. All Rights Reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+</div>

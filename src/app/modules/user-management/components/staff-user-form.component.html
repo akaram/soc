@@ -1,0 +1,86 @@
+<div class="staff-form-page">
+  <div class="page-header">
+    <button type="button" class="btn-back" (click)="cancel()">← Back</button>
+    <h1>{{ pageTitle }}</h1>
+    <p class="subtitle">
+      Assign an RBAC <strong>Role</strong> (access control). User Type (Owner/Tenant) applies to residents only.
+    </p>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="loading" *ngIf="isLoading">Loading…</div>
+
+  <form class="staff-form" *ngIf="!isLoading" (ngSubmit)="save()">
+    <section class="form-section">
+      <h2>Basic Information</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.firstName" name="firstName" required placeholder="First name" />
+        </div>
+        <div class="form-group">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.lastName" name="lastName" required placeholder="Last name" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" [(ngModel)]="form.email" name="email" required placeholder="guard@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" [(ngModel)]="form.phone" name="phone" required placeholder="10-digit mobile" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Role <span class="req">*</span></label>
+          <select [(ngModel)]="form.userRole" name="userRole" required>
+            <option *ngFor="let r of assignableRoles" [ngValue]="r.value">{{ r.label }}</option>
+          </select>
+          <small class="hint">Security Guard → mobile app at /mobile/auth/login</small>
+        </div>
+        <div class="form-group">
+          <label>Status <span class="req">*</span></label>
+          <select [(ngModel)]="form.status" name="status">
+            <option [ngValue]="'ACTIVE'">Active</option>
+            <option [ngValue]="'INACTIVE'">Inactive</option>
+            <option [ngValue]="'SUSPENDED'">Suspended</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h2>{{ isEditMode ? 'Reset Password (optional)' : 'Password' }}</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>{{ isEditMode ? 'New Password' : 'Password' }} <span class="req" *ngIf="!isEditMode">*</span></label>
+          <div class="password-wrap">
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" name="password" />
+            <button type="button" class="toggle-pw" (click)="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁' }}
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" [(ngModel)]="form.confirmPassword" name="confirmPassword" />
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        {{ isSaving ? 'Saving…' : (isEditMode ? 'Update User' : 'Create User') }}
+      </button>
+    </div>
+  </form>
+</div>

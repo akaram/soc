@@ -1,0 +1,683 @@
+.vehicle-list-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  // Page Header
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+
+    .header-left {
+      h1 {
+        font-size: 32px;
+        color: #2c3e50;
+        margin: 0 0 5px 0;
+      }
+
+      p {
+        color: #7f8c8d;
+        margin: 0;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  // Filters Section
+  .filters-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+
+    .search-box {
+      margin-bottom: 15px;
+
+      .search-input {
+        width: 100%;
+        padding: 12px 20px;
+        border: 2px solid #ecf0f1;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #3498db;
+          box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+      }
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+
+      .filter-select {
+        flex: 1;
+        min-width: 150px;
+        padding: 10px;
+        border: 2px solid #ecf0f1;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #3498db;
+        }
+      }
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 10px;
+
+      .view-btn {
+        padding: 10px 20px;
+        border: 2px solid #ecf0f1;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 600;
+
+        &:hover {
+          border-color: #3498db;
+          background: #f8f9fa;
+        }
+
+        &.active {
+          background: #3498db;
+          color: white;
+          border-color: #3498db;
+        }
+      }
+    }
+  }
+
+  // Loading State
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #ecf0f1;
+      border-top-color: #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    p {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+  }
+
+  // Empty State
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #7f8c8d;
+    }
+  }
+
+  // Card View
+  .vehicles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+
+    .vehicle-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .card-header {
+        background: linear-gradient(135deg, #3498db, #2ecc71);
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .vehicle-number {
+          font-size: 20px;
+          font-weight: bold;
+        }
+
+        .badges {
+          display: flex;
+          gap: 5px;
+        }
+      }
+
+      .card-body {
+        padding: 15px;
+
+        .vehicle-info {
+          margin-bottom: 15px;
+
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .label {
+              color: #7f8c8d;
+              font-size: 13px;
+            }
+
+            .value {
+              color: #2c3e50;
+              font-weight: 600;
+              font-size: 14px;
+            }
+          }
+        }
+
+        .integration-status {
+          display: flex;
+          gap: 10px;
+
+          .status-item {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .icon {
+              font-size: 20px;
+            }
+
+            .status-info {
+              flex: 1;
+
+              .status-label {
+                display: block;
+                font-size: 11px;
+                color: #7f8c8d;
+                margin-bottom: 4px;
+              }
+
+              .status-badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
+
+      .card-footer {
+        padding: 15px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .date {
+          font-size: 12px;
+          color: #7f8c8d;
+        }
+      }
+    }
+  }
+
+  // Table View
+  .vehicles-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    .vehicles-table {
+      width: 100%;
+      border-collapse: collapse;
+
+      thead {
+        background: #f8f9fa;
+
+        tr th {
+          padding: 15px;
+          text-align: left;
+          font-weight: 600;
+          color: #2c3e50;
+          font-size: 14px;
+          border-bottom: 2px solid #ecf0f1;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #ecf0f1;
+          transition: background 0.2s ease;
+
+          &:hover {
+            background: #f8f9fa;
+          }
+
+          td {
+            padding: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+
+            .table-badge {
+              display: inline-block;
+              padding: 4px 10px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Badges & Status Classes
+  .badge,
+  .status-badge,
+  .table-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  // Approval Status
+  .approval-approved {
+    background: #d5f4e6;
+    color: #27ae60;
+  }
+
+  .approval-pending {
+    background: #fff3cd;
+    color: #f39c12;
+  }
+
+  .approval-rejected {
+    background: #f8d7da;
+    color: #c0392b;
+  }
+
+  .approval-review {
+    background: #d1ecf1;
+    color: #3498db;
+  }
+
+  // Vehicle Status
+  .status-active {
+    background: #d5f4e6;
+    color: #27ae60;
+  }
+
+  .status-inactive {
+    background: #e8e8e8;
+    color: #7f8c8d;
+  }
+
+  .status-suspended {
+    background: #fff3cd;
+    color: #f39c12;
+  }
+
+  .status-expired {
+    background: #f8d7da;
+    color: #c0392b;
+  }
+
+  .status-blacklisted {
+    background: #2c3e50;
+    color: white;
+  }
+
+  // RFID Status
+  .rfid-active {
+    background: #d5f4e6;
+    color: #27ae60;
+  }
+
+  .rfid-inactive {
+    background: #e8e8e8;
+    color: #7f8c8d;
+  }
+
+  .rfid-damaged {
+    background: #fff3cd;
+    color: #f39c12;
+  }
+
+  .rfid-lost {
+    background: #f8d7da;
+    color: #c0392b;
+  }
+
+  .rfid-expired {
+    background: #fadbd8;
+    color: #c0392b;
+  }
+
+  // FASTag Status
+  .fastag-active {
+    background: #d5f4e6;
+    color: #27ae60;
+  }
+
+  .fastag-inactive {
+    background: #e8e8e8;
+    color: #7f8c8d;
+  }
+
+  .fastag-blocked {
+    background: #f8d7da;
+    color: #c0392b;
+  }
+
+  .fastag-expired {
+    background: #fadbd8;
+    color: #c0392b;
+  }
+
+  .fastag-low {
+    background: #fff3cd;
+    color: #f39c12;
+  }
+
+  // Buttons
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.btn-primary {
+      background: #3498db;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      }
+    }
+
+    &.btn-secondary {
+      background: #95a5a6;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #7f8c8d;
+      }
+    }
+
+    &.btn-success {
+      background: #2ecc71;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #27ae60;
+      }
+    }
+
+    &.btn-danger {
+      background: #e74c3c;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #c0392b;
+      }
+    }
+
+    &.btn-scan {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+    }
+
+    &.btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    &.btn-details {
+      background: #3498db;
+      color: white;
+    }
+  }
+
+  // Animations
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* Modal must be top-level: overlay markup sits outside .vehicle-list-container */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 2px solid #ecf0f1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+
+      h2 {
+        margin: 0;
+        color: #2c3e50;
+      }
+
+      .close-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: #e74c3c;
+        color: white;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #c0392b;
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .modal-body {
+      padding: 20px;
+
+      .detail-section {
+        margin-bottom: 30px;
+
+        h3 {
+          color: #2c3e50;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #ecf0f1;
+        }
+
+        .detail-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 15px;
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+
+          .detail-item {
+            label {
+              display: block;
+              font-size: 12px;
+              color: #7f8c8d;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+              font-weight: 600;
+            }
+
+            .detail-value {
+              display: block;
+              font-size: 16px;
+              color: #2c3e50;
+              font-weight: 600;
+
+              &.highlight {
+                color: #2ecc71;
+                font-size: 18px;
+              }
+            }
+          }
+        }
+
+        .remarks-text {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 6px;
+          color: #2c3e50;
+          line-height: 1.6;
+        }
+      }
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 2px solid #ecf0f1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      position: sticky;
+      bottom: 0;
+      background: white;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
