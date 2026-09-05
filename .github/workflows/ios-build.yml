@@ -1,52 +1,30 @@
 name: Build iOS App
-
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ] # Triggers whenever you push to main
 
 jobs:
-  build-ios:
-    runs-on: macos-26
-
+  build:
+    runs-on: macos-latest # Runs on GitHub's cloud Mac machines!
     steps:
-      - name: Checkout
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Build Angular
+      - name: Build Web App
         run: npm run build
 
-      - name: Sync Capacitor
+      - name: Capacitor Sync
         run: npx cap sync ios
 
-      - name: Install CocoaPods
+      - name: Build iOS App via Xcode CLI
         run: |
           cd ios/App
-          pod install
-
-      - name: Build iOS
-        run: |
-          xcodebuild \
-            -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -sdk iphoneos \
-            -configuration Release \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
-
-      - name: Upload iOS build
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build
-          path: build/Build/Products/Release-iphoneos/
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
